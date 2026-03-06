@@ -1,0 +1,42 @@
+{
+  "total": 10,
+  "solved": 3,
+  "solve_rate": 0.3,
+  "by_source": {
+    "AIME": {
+      "total": 7,
+      "solved": 3
+    },
+    "IMO": {
+      "total": 2,
+      "solved": 0
+    },
+    "Putnam": {
+      "total": 1,
+      "solved": 0
+    }
+  },
+  "by_difficulty": {
+    "medium": {
+      "total": 4,
+      "solved": 2
+    },
+    "hard": {
+      "total": 4,
+      "solved": 1
+    },
+    "easy": {
+      "total": 2,
+      "solved": 0
+    }
+  },
+  "attempt_distribution": {
+    "4": 2,
+    "8": 1,
+    "13": 7
+  },
+  "avg_duration_seconds": 504.92158291339877,
+  "failure_patterns": {
+    "no_code_generated": 91
+  }
+}

@@ -1,0 +1,43 @@
+
+# Relevant Context from Recent DeepMind Research (2025-2026)
+
+## 1. Towards Robust Mathematical Reasoning (IMO-Bench) [2511.01846v1]
+**Key Concept: Robustification.** To prevent memorization, problems are "robustified" by paraphrasing, changing numerical values, or reformulating the objective (e.g., finding a sum instead of a set).
+**Auto-Grading Architecture:**
+- **AnswerAutoGrader:** Uses a model to extract final answers and check semantic equivalence.
+- **ProofAutoGrader:** Grades reasoning based on a specific rubric (Correct, Almost, Partial, Incorrect).
+**Prompting Strategy for Verification (Appendix B.5):**
+The prompt forces the model to act as an "expert grader" with a 0-7 scale.
+"You are an expert grader... only arguments that are logically sound, complete, and precise should be rewarded."
+It requires a structured output:
+1. **Analyze References:** Meticulously read problem and Ground Truth.
+2. **Step-by-Step Verification:** Verify logical validity of every step. Identify flaws/gaps.
+3. **Assess Progress:** Determine non-trivial progress.
+4. **Score Determination:** Compare against rubric.
+
+## 2. Accelerating Scientific Research with Gemini [2602.03837v1]
+**Key Techniques:**
+1. **Iterative Prompting & Refinement:** "Vibe-proving" — breaking problems into sub-tasks and using the model to draft proofs which are rigorously verified by humans.
+2. **Neuro-Symbolic Loops (Section 6.1):** For the Cosmic String Spectra problem, the model was embedded in a **Tree Search** loop.
+    - **Symbolic Proposal:** Model proposes a mathematical expression in LaTeX.
+    - **Code Generation:** Model autonomously writes Python code to evaluate the expression.
+    - **Automated Feedback:** System executes code; tracebacks/divergence errors are fed back to the model to prune branches. This pruned >80% of 600 candidate branches.
+    - **Equation:** $P_N = \frac{32G\mu^2}{\pi^3 N^2} I(N, \alpha)$ where $I(N, \alpha)$ is a complex integral over $S^2$. The AI found the exact closed form $C_0 = \frac{1}{2} \text{Cin}(2N\pi)$.
+3. **Counterexample Search:** Using the model to find specific instances (e.g., graphs, matrices) that violate conjectures (e.g., Submodular Welfare conjecture refutation).
+
+## 3. Towards Autonomous Mathematics Research (Aletheia) [2602.10177v2]
+**System Architecture:** Aletheia consists of three sub-agents iteratively interacting:
+1. **Generator:** Proposes candidate solutions.
+2. **Verifier:** Critiques solutions using informal natural language verification (and potentially code).
+3. **Reviser:** Refines the solution based on Verifier feedback.
+**Inference-Time Scaling (Fig 2):** Accuracy on IMO-ProofBench Advanced scales log-linearly with inference compute (up to $2^{11}$ scale).
+**Key Milestones:**
+- **Feng26:** Fully autonomous generation of a research paper on "Eigenweights for Arithmetic Hirzebruch Proportionality".
+- **Erdős Problems:** Aletheia solved 4 open problems from the Erdős Conjectures database (Ids 652, 1051, etc.) autonomously.
+**Interaction Card (Transparency):** A standardized format to document Human-AI collaboration (Prompt -> Response -> Refinement).
+
+**Relevant Equations (LaTeX):**
+- **Courtade-Kumar Conjecture (Information Theory):** $I(b(X^n); Y^n) \leq 1 - H(\alpha)$.
+- **Bethe Permanent Lower Bound:** $\text{perm}(A_G) > \text{perm}_{\text{B}}(A_G)$.
+- **Chamfer Distance Approximation:** $\text{CH}(A, B) = \sum_{a \in A} \min_{b \in B} \|a - b\|$.
+- **Ratio Difference Maximization:** $f(S, T) = \frac{V(S)}{V(T)} - \frac{W(S)}{W(T)}$.

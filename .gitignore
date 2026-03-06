@@ -1,0 +1,20 @@
+# Virtual Environments and Python Caches
+venv/
+__pycache__/
+
+# Large folders (Models, downloaded repos, etc)
+models/
+corpus/
+supply_chain/
+youtube/
+
+# Datasets and Large Text Files
+*.zip
+*.pdf
+*.log
+*.csv
+*ChatContext*.txt
+*ChatContext*.md
+*ResearchData*.txt
+download*.txt
+temp_*.txt

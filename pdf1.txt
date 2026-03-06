@@ -1,0 +1,226 @@
+2025-11-4
+Towards Robust Mathematical Reasoning
+Thang Luong⋄, Dawsen Hwang*, Hoang H. Nguyen*†, Golnaz Ghiasi*, Yuri Chervonyi*, Insuk Seo*†, Junsu
+Kim*, Garrett Bingham, Jonathan Lee, Swaroop Mishra†, Alex Zhai, Clara Huiyi Hu, Henryk Michalewski,
+Jimin Kim†, Jeonghyun Ahn†, Junhwi Bae†, Xingyou Song, Trieu H. Trinh, Quoc V. Le, Junehyuk Jung⋄
+⋄Corresponding authors, *Core and equal contributors, †Work previously conducted under Google DeepMind
+Finding the right north-star metrics is highly critical for advancing the mathematical reasoning capabilities of
+foundation models, especially given that existing evaluations are either too easy or only focus on getting correct
+short answers. To address these issues, we present IMO-Bench, a suite of advanced reasoning benchmarks, vetted
+by a panel of top specialists and that specifically targets the level of the International Mathematical Olympiad
+(IMO), the most prestigious venue for young mathematicians. IMO-AnswerBench first tests models on 400 diverse
+Olympiad problems with verifiable short answers. IMO-ProofBench is the next-level evaluation for proof-writing
+capabilities, which includes both basic and advanced IMO level problems as well as detailed grading guidelines to
+facilitate automatic grading. These benchmarks played a crucial role in our historic achievement of the gold-level
+performance at IMO 2025 with Gemini Deep Think (Luong and Lockhart, 2025). Our model achieved 80.0% on
+IMO-AnswerBench and 65.7% on the advanced IMO-ProofBench, surpassing the best non-Gemini models by large
+margins of 6.9% and 42.4% respectively. We also showed that autograders built with Gemini reasoning correlate
+well with human evaluations and construct IMO-GradingBench, with 1000 human gradings on proofs, to enable
+further progress in automatic evaluation of long-form answers. We hope that IMO-Bench will help the community
+towards advancing robust mathematical reasoning and release it at https://imobench.github.io.
+1. Introduction
+The field of artificial intelligence, particularly
+large language or foundation models, has demon-
+strated remarkable progress in mathematical rea-
+soning capabilities. Many popular benchmarks
+such as GSM8K (Cobbe et al., 2021), MATH
+(Hendrycks et al., 2021), and the recently pop-
+ular AIME have approached saturation, limiting
+their usefulness in differentiating model perfor-
+mances. The problems in these datasets often rely
+on a limited set of techniques and do not always
+require the deep, multi-step reasoning needed
+to truly evaluate AI mathematical reasoning. In-
+deed, relying on final answer matching, even in
+recent benchmarks such as FrontierMath (Glazer
+et al., 2024) and Humanity’s Last Exam (Phan
+et al., 2025), is not entirely reliable. It could lead
+to AI systems that are good at guessing answers
+but do not exhibit robust reasoning.
+To address these shortcomings, we propose
+IMO-Bench, a suite of benchmarks that focus on
+robust reasoning at the level of the International
+Mathematical Olympiad (IMO), the world’s most
+celebrated arena for young mathematicians. The
+IMO is selected due to its notoriously difficult
+Figure 1 | IMO-ProofBench, a benchmark in IMO-
+Bench, for measuring proof-writing capabilities.
+We demonstrated high correlations between hu-
+man and automatic evaluations on a variety of
+public models, including our IMO-gold model.
+See §3 and §5.3 for more details.
+problems, which require not only rigorous multi-
+step reasoning but also a high degree of novelty,
+going beyond the simple application of known
+Corresponding author(s): thangluong@google.com, junehuyk@google.com
+External affiliations: Georgia Institute of Technology (Hoang Nguyen), Seoul National University (Insuk Seo, Junsu Kim, Jimin Kim), Microsoft
+(Swaroop Mishra), Massachusetts Institute of Technology (Jeonghyun Ahn, Junhwi Bae), Brown University (Junehyuk Jung).
+© 2025 Google DeepMind. All rights reserved
+arXiv:2511.01846v1  [cs.CL]  3 Nov 2025
+
+Towards Robust Mathematical Reasoning
+formulas. Such characteristics make IMO an ex-
+cellent testbed for assessing reasoning capability.
+IMO-Bench covers three different tasks as summa-
+rized in Table 1 and all problems were vetted by
+a panel of IMO medalists1 and mathematicians.
+Benchmark
+Size
+Task
+IMO-AnswerBench
+400
+Get the right answer
+IMO-ProofBench
+60
+Write a rigorous proof
+IMO-GradingBench
+1000
+Grade a proof
+Table 1 | Benchmarks in the IMO-Bench suite.
+The first benchmark, IMO-AnswerBench, con-
+sists of 400 problems with verifiable answers care-
+fully chosen from past Olympiad competitions
+and then altered by experts to avoid memoriza-
+tion. Problems were chosen from a variety of
+topics whose solutions require different problem
+solving techniques to ensure a diverse represen-
+tation of topics, ideas, and domain knowledge as
+illustrated in Figure 2.
+The second benchmark, IMO-ProofBench, con-
+sists of 60 problems of varying difficulty levels,
+similar to those found at the IMO. While some
+problems have short answers, all require mod-
+els to generate complete proofs. The benchmark
+is divided into two subsets, basic and advanced,
+each with 30 problems. While the basic set covers
+difficulty levels from pre-IMO up to IMO-Medium,
+problems in the advanced set are up to IMO-hard
+level and consist of 5 complete IMO sets, 3 of
+which are novel. We designed this benchmark to
+steer the community’s focus from final answers
+to proofs, enabling a more rigorous assessment
+of AI reasoning processes. To ensure consistent
+evaluation, we include detailed grading schemes
+suitable for both human experts and automated
+systems. Figure 1 provides an early look into the
+potential of automatic graders for proofs.
+These two benchmarks played a crucial role
+in the development of our Gemini Deep Think,
+leading to the historic achievement of the gold-
+level performance at IMO 2025 (Luong and Lock-
+hart, 2025). Our IMO-gold model achieved an
+accuracy of 80.0% on IMO-AnswerBench by auto-
+matic evaluation, surpassing the best non-Gemini
+1Together, they won 10 gold and 5 silver IMO medals.
+model and the best open-weight model by a large
+margin of 6.9% and 19.2% respectively. The ad-
+vanced IMO-ProofBench is much more challeng-
+ing. Our IMO-gold model scored 65.7%, whereas
+the best non-Gemini and the best open-weight
+models performed poorly with only 23.3% and
+7.1% accuracy according to human evaluations.
+Furthermore, we demonstrate that automated
+graders for both answers and proofs, built upon
+Gemini 2.5 Pro, achieve high correlation with
+expert human evaluations.
+Last
+but
+not
+least,
+we
+introduce
+IMO-
+GradingBench, a benchmark of 1000 solutions
+to problems in the advanced IMO-ProofBench,
+together with grades from human experts. This
+resource is designed to foster progress in the au-
+tomatic evaluation of long-form answers. We re-
+lease IMO-Bench to the community and hope that
+it will spur further research towards advancing
+robust mathematical reasoning.
+2. IMO-AnswerBench
+2.1. Problem Selection
+400 math problems were handpicked from various
+national, regional, and international Olympiad
+contests, spanning across four categories (Alge-
+bra, Combinatorics, Geometry, Number Theory).
+For each category, the benchmark contains 100
+problems across four levels of difficulty: pre-IMO
+(middle school or pre-Math Olympiad problems),
+IMO-Easy (equivalent to Problem 1 or Problem
+4 at the IMO), IMO-Medium (equivalent to Prob-
+lem 2 or Problem 5 at the IMO) and IMO-Hard
+(equivalent to Problem 3 or Problem 6 at the IMO
+or post-Math Olympiad problems). The difficulty
+breakdown for each category is listed in Table 2.
+Category
+Pre-IMO
+IMO-Easy
+IMO-Medium
+IMO-Hard
+Algebra
+11
+46
+32
+11
+Combinatorics
+4
+19
+31
+46
+Geometry
+13
+44
+32
+11
+Number Theory
+2
+20
+31
+47
+Table 2 | Difficulty statistics for IMO-AnswerBench.
+Problems with short answers were chosen so
+the correctness of a model’s output can be quickly
+and reliably determined. Given the proof-heavy
+nature of many math Olympiad problems, we
+2
+
+Towards Robust Mathematical Reasoning
+Figure 2 | Topic distribution by category in IMO-AnswerBench. Number Theory and Combinatorics
+have the most topics which reflect the broad knowledge required to solve these problems while
+Geometry is mostly skewed towards angle and sidelength computation problems due to the nature of
+the short answer benchmark.
+perform an additional reformulation step for cer-
+tain examples. This adjustment ensures that each
+problem yields a clear and nontrivial short answer,
+thereby reducing ambiguity during solving and
+verification and confirming that models utilize
+nontrivial reasoning. See further details in A.4.
+2.2. Problem Robustification
+To avoid data memorization, an additional step
+of problem modification is done via paraphras-
+ing, changing the name of objects in the problem
+(such as changing point names for geometry prob-
+lems), reformulating, modifying numerical values
+and/or adding distractors to the problem. This
+process is done either manually or automatically
+using language models. We highlight some exam-
+ples in Table 8 and detail below.
+One example is an algebra problem from Aus-
+tria Math Olympiad 2017. The problem is modi-
+fied by making the substitution 𝑥= 𝑎+ 𝑏−𝑐, 𝑦=
+𝑏+𝑐−𝑎, and 𝑧= 𝑐+𝑎−𝑏for positive real numbers
+𝑥, 𝑦, 𝑧with 𝑎, 𝑏, and 𝑐being the lengths of the
+sides of some triangle to obtain the modified prob-
+lem in the Robustified column. This modification
+uses the knowledge that 𝑎, 𝑏, and 𝑐are lengths of
+a triangle if and only if they satisfy the triangle
+inequalities 𝑎+ 𝑏> 𝑐, 𝑎+ 𝑐> 𝑏, and 𝑏+ 𝑐> 𝑎.
+Another example is a combinatorics problem
+from USA TST 2005. From the original statement,
+the problem is modified using several techniques
+such as modifying numerical values (by assign-
+ing a specific value to the variable 𝑛so that it is
+harder to guess the pattern), adding distractors
+(by introducing a function or variables that are
+3
