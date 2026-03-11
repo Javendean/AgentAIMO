@@ -62,7 +62,18 @@ class TimeLimitExceeded(Exception):
 
 @dataclass
 class Attempt:
-    """A single generate/correct attempt within a research cycle."""
+    """A single generate/correct attempt within a research cycle.
+
+    Attributes:
+        attempt_number (int): The sequential attempt number.
+        solution_text (str): The raw text of the model's generated solution.
+        extracted_answer (str | None): The answer extracted using regex.
+        code_blocks_found (int): Number of Python code blocks extracted.
+        verification_passed (bool): Whether the sandbox executed the code without errors.
+        verification_output (str): The combined stdout/stderr from the sandbox.
+        nl_verification (str): Output from the optional natural language verifier.
+        duration_seconds (float): Time taken for this specific attempt.
+    """
     attempt_number: int
     solution_text: str
     extracted_answer: str | None
@@ -75,7 +86,26 @@ class Attempt:
 
 @dataclass
 class ResearchTrace:
-    """Full research trace for one problem -- the output artifact."""
+    """Full research trace for one problem -- the output artifact.
+
+    Attributes:
+        problem_id (str): The unique identifier for the problem.
+        problem_text (str): The actual text of the math problem.
+        source (str): The dataset source of the problem.
+        difficulty (str): Categorical difficulty level.
+        attempts (list[Attempt]): List of all reasoning attempts made.
+        majority_vote_answers (dict): Tally of extracted answers during generation.
+        final_answer (str | None): The agent's ultimately chosen answer.
+        solved (bool): Indicates if the agent found a consensus/verified answer.
+        total_duration_seconds (float): Total time spent researching the problem.
+        total_attempts (int): Total number of reasoning attempts.
+        strategy (str): The strategy used to arrive at the final answer.
+
+    Note:
+        Blindspot: The `solved` attribute being True does NOT mean the math is correct,
+        it only means the model arrived at an answer that survived code execution
+        and majority voting/self-correction loops.
+    """
     problem_id: str
     problem_text: str
     source: str
@@ -127,26 +157,25 @@ class DeepResearcher:
         tir_max_rounds: int = 3,
         dry_run: bool = False,
     ):
-        """
-        Initialize the DeepResearcher v2.
+        """Initialize the DeepResearcher v2.
 
         Args:
-            model_path: Path to the AWQ-quantized model weights.
-            time_limit_hours: Hard time limit (default 4.5hr = 5hr - 30min buffer).
-            num_samples: Number of parallel samples for majority voting.
-            max_retries: Self-correction attempts for unresolved problems.
-            generate_temperature: Temperature for generation (creative).
-            correct_temperature: Temperature for corrections (precise).
-            max_generate_tokens: Max tokens per generation (8192 for long CoT).
-            max_correct_tokens: Max tokens per correction.
-            code_timeout: Timeout for sandboxed code execution (seconds).
-            gpu_memory_utilization: Fraction of GPU memory to use.
-            max_model_len: Maximum sequence length for the model.
-            patch_text: Optional System Prompt Patch from analysis.
-            enable_tir: Enable Tool-Integrated Reasoning.
-            enable_nl_verify: Enable Natural Language Verification.
-            tir_max_rounds: Max code execution rounds per TIR generation.
-            dry_run: If True, skip vLLM init (for testing locally).
+            model_path (str): Path to the AWQ-quantized model weights.
+            time_limit_hours (float, optional): Hard time limit (default 4.5hr = 5hr - 30min buffer).
+            num_samples (int, optional): Number of parallel samples for majority voting.
+            max_retries (int, optional): Self-correction attempts for unresolved problems.
+            generate_temperature (float, optional): Temperature for generation (creative).
+            correct_temperature (float, optional): Temperature for corrections (precise).
+            max_generate_tokens (int, optional): Max tokens per generation (8192 for long CoT).
+            max_correct_tokens (int, optional): Max tokens per correction.
+            code_timeout (int, optional): Timeout for sandboxed code execution (seconds).
+            gpu_memory_utilization (float, optional): Fraction of GPU memory to use.
+            max_model_len (int, optional): Maximum sequence length for the model.
+            patch_text (str | None, optional): Optional System Prompt Patch from analysis.
+            enable_tir (bool, optional): Enable Tool-Integrated Reasoning.
+            enable_nl_verify (bool, optional): Enable Natural Language Verification.
+            tir_max_rounds (int, optional): Max code execution rounds per TIR generation.
+            dry_run (bool, optional): If True, skip vLLM init (for testing locally).
         """
         self.model_path = model_path
         self.time_limit_hours = time_limit_hours
@@ -179,7 +208,17 @@ class DeepResearcher:
             logger.info("DRY RUN mode -- vLLM not initialized")
 
     def _init_vllm(self, model_path: str, gpu_mem: float, max_len: int):
-        """Initialize the vLLM inference engine."""
+        """Initialize the vLLM inference engine.
+
+        Args:
+            model_path (str): Path to the AWQ-quantized model weights.
+            gpu_mem (float): Fraction of GPU memory to allocate to vLLM.
+            max_len (int): Maximum sequence length for context window.
+
+        Note:
+            Blindspot: Hardcodes `enforce_eager=True` which disables CUDA graph optimizations.
+            This could significantly degrade generation speed on H100s.
+        """
         from vllm import LLM
 
         logger.info(f"Loading model from {model_path}")
@@ -211,7 +250,11 @@ class DeepResearcher:
     # =========================================================================
 
     def _check_timer(self):
-        """Check if we have exceeded the time limit."""
+        """Check if we have exceeded the time limit.
+
+        Raises:
+            TimeLimitExceeded: If the hard timer triggers a graceful exit.
+        """
         if self.start_time is None:
             return
         elapsed = time.time() - self.start_time
@@ -223,13 +266,21 @@ class DeepResearcher:
             )
 
     def _remaining_seconds(self) -> float:
-        """Get remaining seconds."""
+        """Get remaining seconds.
+
+        Returns:
+            float: The number of seconds left before the hard timer expires.
+        """
         if self.start_time is None:
             return self.time_limit_seconds
         return max(0, self.time_limit_seconds - (time.time() - self.start_time))
 
     def _elapsed_str(self) -> str:
-        """Human-readable elapsed time."""
+        """Human-readable elapsed time.
+
+        Returns:
+            str: Elapsed time formatted as "H:MM:SS".
+        """
         if self.start_time is None:
             return "0:00:00"
         elapsed = time.time() - self.start_time
@@ -239,7 +290,11 @@ class DeepResearcher:
         return f"{hours}:{minutes:02d}:{seconds:02d}"
 
     def _remaining_str(self) -> str:
-        """Human-readable remaining time."""
+        """Human-readable remaining time.
+
+        Returns:
+            str: Remaining time formatted as "H:MM".
+        """
         remaining = self._remaining_seconds()
         if remaining <= 0:
             return "0:00:00"
@@ -257,7 +312,16 @@ class DeepResearcher:
         temperature: float,
         max_tokens: int,
     ) -> str:
-        """Generate a single text response using the vLLM engine."""
+        """Generate a single text response using the vLLM engine.
+
+        Args:
+            user_prompt (str): The prompt to send to the model.
+            temperature (float): The sampling temperature.
+            max_tokens (int): The maximum number of tokens to generate.
+
+        Returns:
+            str: The generated text completion.
+        """
         if self.dry_run:
             return (
                 "[DRY RUN] This is a placeholder response.\n\n"
@@ -294,7 +358,17 @@ class DeepResearcher:
         temperature: float,
         max_tokens: int,
     ) -> list[str]:
-        """Generate N solutions in a single batch (majority voting)."""
+        """Generate N solutions in a single batch (majority voting).
+
+        Args:
+            user_prompt (str): The prompt to send to the model.
+            n (int): The number of parallel completions to generate.
+            temperature (float): The sampling temperature.
+            max_tokens (int): The maximum number of tokens to generate per completion.
+
+        Returns:
+            list[str]: A list of generated text completions.
+        """
         if self.dry_run:
             return [self._generate_text(user_prompt, temperature, max_tokens)
                     for _ in range(min(n, 3))]  # Only 3 in dry run
@@ -331,11 +405,23 @@ class DeepResearcher:
         temperature: float,
         max_tokens: int,
     ) -> str:
-        """
-        Generate with Tool-Integrated Reasoning.
+        """Generate with Tool-Integrated Reasoning.
 
-        The model generates text. When it produces a ```python block,
+        The model generates text. When it produces a ` ```python ` block,
         we execute it, inject the output, and let the model continue.
+
+        Args:
+            user_prompt (str): The prompt to send to the model.
+            temperature (float): The sampling temperature.
+            max_tokens (int): The maximum number of tokens to generate overall.
+
+        Returns:
+            str: The final combined generation text including execution outputs.
+
+        Note:
+            Bug/Blindspot: The state compression block replaces the exact execution history
+            with a truncated summary. This "anti-context-rot" feature can destroy critical
+            intermediate variables, causing the model to hallucinate subsequent steps.
         """
         if not self.enable_tir:
             return self._generate_text(user_prompt, temperature, max_tokens)
@@ -429,7 +515,19 @@ class DeepResearcher:
     # =========================================================================
 
     def _nl_verify(self, problem_text: str, solution: str) -> tuple[bool, str]:
-        """Run natural language verification on a solution."""
+        """Run natural language verification on a solution.
+
+        Args:
+            problem_text (str): The problem being solved.
+            solution (str): The model's proposed solution.
+
+        Returns:
+            tuple[bool, str]: Success boolean and verdict message.
+
+        Note:
+            Bug/Blindspot: The NL verifier uses the exact same model to review its own output,
+            which often leads to a rubber-stamp confirmation bias.
+        """
         if not self.enable_nl_verify:
             return True, "NL Verify disabled"
 
@@ -450,13 +548,19 @@ class DeepResearcher:
         answer_counts: Counter,
         total_generated: int,
     ) -> str | None:
-        """
-        Check if we have early consensus to stop generating more samples.
+        """Check if we have early consensus to stop generating more samples.
 
         Thresholds (from NemoSkills 1st place):
           - With 4 samples: need 3/4 (75%) agreement
           - With 8 samples: need 5/8 (63%) agreement
           - With 12+ samples: need 7/12 (58%) agreement
+
+        Args:
+            answer_counts (Counter): Tally of extracted answers so far.
+            total_generated (int): Total number of samples generated so far.
+
+        Returns:
+            str | None: The consensus answer string if thresholds are met, else None.
         """
         if not answer_counts:
             return None
@@ -486,8 +590,7 @@ class DeepResearcher:
         self,
         problem: dict,
     ) -> tuple[list[Attempt], dict, str | None]:
-        """
-        Generate N solutions in waves with early stopping on consensus.
+        """Generate N solutions in waves with early stopping on consensus.
 
         Wave strategy (inspired by NemoSkills 1st place):
           - Wave 1: Generate 4 → check consensus (saves 75% compute if strong)
@@ -495,8 +598,12 @@ class DeepResearcher:
           - Wave 3: Generate 4 more (total 12) → check consensus (saves 25%)
           - Wave 4: Generate remaining to reach num_samples → final vote
 
+        Args:
+            problem (dict): The problem dictionary containing `problem_text`.
+
         Returns:
-            (attempts, vote_counts, consensus_answer)
+            tuple[list[Attempt], dict, str | None]: A tuple containing the list of attempts,
+                                                    the vote dictionary, and the consensus answer (if any).
         """
         problem_text = problem["problem_text"]
         generate_prompt = build_generate_prompt(problem_text)
@@ -608,15 +715,23 @@ class DeepResearcher:
         problem: dict,
         attempts: list,
     ) -> str | None:
-        """
-        Use the model to select the best solution via comparative evaluation.
+        """Use the model to select the best solution via comparative evaluation.
 
         Inspired by NemoSkills (AIMO2 1st place): when majority vote has
         weak consensus, feeding all solution summaries back into the model
         and asking it to pick the best one can recover +3-5% accuracy.
 
+        Args:
+            problem (dict): The problem dictionary.
+            attempts (list[Attempt]): The list of previous attempts to evaluate.
+
         Returns:
-            The selected answer string, or None if selection fails.
+            str | None: The selected answer string, or None if selection fails.
+
+        Note:
+            Blindspot: GenSelect arbitrarily truncates solution summaries to ~500 tokens.
+            If the critical logical flaw (or correct step) is buried deeper in the reasoning,
+            the GenSelect model will make a blind choice based on truncated data.
         """
         # Only consider attempts that have an extracted answer
         valid = [a for a in attempts if a.extracted_answer is not None]
@@ -671,17 +786,18 @@ class DeepResearcher:
     # =========================================================================
 
     def research_problem(self, problem: dict) -> ResearchTrace:
-        """
-        Full research loop for one problem:
+        """Full research loop for one problem.
+
+        Process:
         1. Majority vote (N parallel samples)
         2. If consensus found → optional NL verify → done
         3. If no consensus → self-correct top candidate
 
         Args:
-            problem: Dict with keys: id, problem_text, source, difficulty
+            problem (dict): Dict with keys: id, problem_text, source, difficulty.
 
         Returns:
-            ResearchTrace with all attempts and the final result.
+            ResearchTrace: The trace containing all attempts and the final result.
         """
         problem_start = time.time()
         problem_id = problem.get("id", "unknown")
@@ -723,7 +839,22 @@ class DeepResearcher:
         problem_start: float,
         problem_text: str,
     ) -> ResearchTrace:
-        """Inner research loop, separated to allow system prompt restore via try/finally."""
+        """Inner research loop, separated to allow system prompt restore via try/finally.
+
+        Args:
+            problem (dict): The problem dict.
+            trace (ResearchTrace): The initialized trace to populate.
+            problem_start (float): The timestamp when processing began.
+            problem_text (str): The raw text of the problem.
+
+        Returns:
+            ResearchTrace: The fully populated trace.
+
+        Note:
+            Bug/Blindspot: The fallback Self-Correction phase forcefully injects an error
+            about `assistantcommentary` if that string is detected. This hardcodes a fix
+            for a specific model quirk directly into the agent's core loop, making it brittle.
+        """
         self._check_timer()
         attempts, vote_dict, consensus = self._majority_vote(problem)
         trace.attempts.extend(attempts)
@@ -900,10 +1031,14 @@ class DeepResearcher:
     def _compute_time_budget(
         self, problems_remaining: int, difficulty: str
     ) -> float:
-        """
-        Compute per-problem time budget based on remaining time and difficulty.
+        """Compute per-problem time budget based on remaining time and difficulty.
 
-        Returns max seconds to spend on this problem.
+        Args:
+            problems_remaining (int): Number of problems left in the queue.
+            difficulty (str): Categorical difficulty string ("easy", "medium", "hard", "extreme").
+
+        Returns:
+            float: Maximum seconds to spend on this problem.
         """
         remaining = self._remaining_seconds()
         if problems_remaining <= 0:
@@ -930,15 +1065,14 @@ class DeepResearcher:
     # =========================================================================
 
     def run(self, problems: list[dict], output_path: str) -> dict:
-        """
-        Main execution loop. Processes problems with hard timer.
+        """Main execution loop. Processes problems with a hard timer.
 
         Args:
-            problems: List of problem dicts.
-            output_path: Path to write JSONL output.
+            problems (list[dict]): List of problem dictionaries to process.
+            output_path (str): File path to write the resulting JSONL data.
 
         Returns:
-            Summary statistics dict.
+            dict: Summary statistics covering solve rates and completion times.
         """
         self.start_time = time.time()
         output_file = Path(output_path)

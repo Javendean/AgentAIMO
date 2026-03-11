@@ -18,7 +18,14 @@ from pathlib import Path
 
 
 def load_traces(path: str) -> list[dict]:
-    """Load JSONL research traces."""
+    """Load JSONL research traces from a file.
+
+    Args:
+        path (str): The file path to the JSONL traces.
+
+    Returns:
+        list[dict]: A list of dictionaries, where each dict represents a research trace.
+    """
     traces = []
     with open(path, "r", encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
@@ -33,7 +40,21 @@ def load_traces(path: str) -> list[dict]:
 
 
 def analyze(traces: list[dict]) -> dict:
-    """Compute comprehensive statistics from research traces."""
+    """Compute comprehensive statistics from research traces.
+
+    Args:
+        traces (list[dict]): A list of loaded trace dictionaries.
+
+    Returns:
+        dict: A dictionary containing aggregated statistics such as total problems,
+              solve rate, distributions by source and difficulty, timing, and
+              common failure patterns.
+
+    Note:
+        Blindspot: The `solve_rate` calculation trusts the `solved` boolean from the trace.
+        However, the trace sets `solved` to True based on matching answer strings or
+        un-crashing code blocks, NOT necessarily mathematically sound reasoning.
+    """
     total = len(traces)
     solved = sum(1 for t in traces if t.get("solved", False))
 
@@ -100,7 +121,19 @@ def analyze(traces: list[dict]) -> dict:
 
 
 def generate_patch(stats: dict, traces: list[dict]) -> str:
-    """Generate a System Prompt Patch based on failure analysis."""
+    """Generate a System Prompt Patch based on failure analysis.
+
+    Args:
+        stats (dict): The computed statistics dictionary.
+        traces (list[dict]): The raw trace data (currently unused, kept for future expansions).
+
+    Returns:
+        str: A markdown string containing custom instructions to patch the system prompt.
+
+    Note:
+        Blindspot: The patch generation rules are hardcoded heuristics (e.g., `> 2` timeouts).
+        They do not dynamically adapt to more subtle, underlying logical failures.
+    """
     lines = ["## Domain-Specific Patches (Auto-Generated from Sprint Analysis)", ""]
 
     # Add patches for common failure patterns
@@ -164,7 +197,11 @@ def generate_patch(stats: dict, traces: list[dict]) -> str:
 
 
 def print_report(stats: dict):
-    """Print a human-readable analysis report."""
+    """Print a human-readable analysis report to standard output.
+
+    Args:
+        stats (dict): The computed statistics dictionary.
+    """
     print("=" * 60)
     print("RESEARCH SPRINT ANALYSIS REPORT")
     print("=" * 60)

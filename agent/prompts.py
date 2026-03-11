@@ -20,7 +20,15 @@ import re
 # =============================================================================
 
 def detect_model_family(model_path: str) -> str:
-    """Detect model family from path/name for correct chat template."""
+    """Detect model family from path/name for correct chat template.
+
+    Args:
+        model_path (str): The file path or name of the model being used.
+
+    Returns:
+        str: A string indicating the detected model family ('qwen' or 'llama').
+             Defaults to 'qwen' if the family cannot be explicitly determined.
+    """
     path_lower = model_path.lower()
     if "qwen" in path_lower or "qwq" in path_lower or "klear" in path_lower:
         return "qwen"
@@ -42,7 +50,17 @@ def format_chat_prompt(
     model_family: str = "qwen",
     assistant_prefix: str = "",
 ) -> str:
-    """Format a chat prompt using the correct template for the model family."""
+    """Format a chat prompt using the correct template for the model family.
+
+    Args:
+        system_prompt (str): The system prompt text.
+        user_prompt (str): The user prompt text.
+        model_family (str, optional): The target model family ('qwen' or 'llama'). Defaults to "qwen".
+        assistant_prefix (str, optional): Optional text to pre-fill the assistant's response. Defaults to "".
+
+    Returns:
+        str: The fully formatted chat prompt string ready for inference.
+    """
     if model_family == "qwen":
         return _format_qwen(system_prompt, user_prompt, assistant_prefix)
     elif model_family == "llama":
@@ -52,7 +70,16 @@ def format_chat_prompt(
 
 
 def _format_qwen(system: str, user: str, asst_prefix: str = "") -> str:
-    """Qwen / Qwen2.5 / QwQ / DeepSeek-R1-Distill-Qwen chat template."""
+    """Qwen / Qwen2.5 / QwQ / DeepSeek-R1-Distill-Qwen chat template.
+
+    Args:
+        system (str): The system prompt text.
+        user (str): The user prompt text.
+        asst_prefix (str, optional): Optional text to pre-fill the assistant's response. Defaults to "".
+
+    Returns:
+        str: The formatted Qwen-style chat prompt.
+    """
     prompt = (
         f"<|im_start|>system\n{system}<|im_end|>\n"
         f"<|im_start|>user\n{user}<|im_end|>\n"
@@ -62,7 +89,16 @@ def _format_qwen(system: str, user: str, asst_prefix: str = "") -> str:
 
 
 def _format_llama(system: str, user: str, asst_prefix: str = "") -> str:
-    """Llama 3 / DeepSeek-R1-Distill-Llama chat template."""
+    """Llama 3 / DeepSeek-R1-Distill-Llama chat template.
+
+    Args:
+        system (str): The system prompt text.
+        user (str): The user prompt text.
+        asst_prefix (str, optional): Optional text to pre-fill the assistant's response. Defaults to "".
+
+    Returns:
+        str: The formatted Llama-style chat prompt.
+    """
     prompt = (
         f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
         f"{system}<|eot_id|>"
@@ -78,7 +114,15 @@ def format_tir_continuation(
     model_family: str,
     execution_result: str,
 ) -> str:
-    """Format code execution output for TIR injection mid-generation."""
+    """Format code execution output for Tool-Integrated Reasoning (TIR) injection mid-generation.
+
+    Args:
+        model_family (str): The model family, though currently unused in the formatting logic.
+        execution_result (str): The string output from the executed Python code.
+
+    Returns:
+        str: A markdown block containing the execution output, formatted for the model to continue generation.
+    """
     # This is injected as if the assistant paused and received tool output
     result_block = f"\n```output\n{execution_result}\n```\n"
     return result_block
@@ -144,8 +188,8 @@ Test candidate invariants in code before building your proof around one.
 code blocks. This breaks the parsing engine.
 2. **Raw Strings for LaTeX**: When printing LaTeX or regex, ALWAYS use raw \
 strings `r"..."` to prevent `SyntaxError: unicode error`.
-   - BAD: `print("\frac{1}{2}")` (Crashes)
-   - GOOD: `print(r"\frac{1}{2}")` (Works)
+   - BAD: `print("\\frac{{1}}{{2}}")` (Crashes)
+   - GOOD: `print(r"\\frac{{1}}{{2}}")` (Works)
 3. **Complete Code**: Do not truncate or summarize code. It must be executable.
 
 ## Anti-Confirmation Bias Protocol
@@ -230,10 +274,18 @@ _TOPIC_KEYWORDS = {
 
 
 def classify_topic(problem_text: str) -> str | None:
-    """
-    Classify a math problem into a topic via keyword matching.
+    """Classify a math problem into a topic via keyword matching.
 
-    Returns the topic key (e.g., "algebra") or None if uncertain.
+    Args:
+        problem_text (str): The text of the math problem to classify.
+
+    Returns:
+        str | None: The topic key (e.g., "algebra") if classified with at least
+                    2 matching keywords, or None if uncertain.
+
+    Note:
+        Blindspot: Simple keyword matching is highly brittle. Words like 'variable'
+        might appear in geometry or combinatorics problems, leading to misclassification.
     """
     text_lower = problem_text.lower()
     scores = {}
@@ -364,30 +416,70 @@ strategy if needed.
 # =============================================================================
 
 def build_system_prompt(patch_text: str | None = None) -> str:
-    """Build the full system prompt with optional patches."""
+    """Build the full system prompt with optional patches.
+
+    Args:
+        patch_text (str | None, optional): Custom instructions to inject into the system prompt.
+                                           Defaults to None.
+
+    Returns:
+        str: The complete system prompt text.
+    """
     patch = patch_text if patch_text else PATCH_SLOT_DEFAULT
     return SYSTEM_PROMPT.format(patch_slot=patch)
 
 
 def build_generate_prompt(problem_text: str) -> str:
-    """Build the generation prompt for a problem."""
+    """Build the generation prompt for a problem.
+
+    Args:
+        problem_text (str): The math problem to be solved.
+
+    Returns:
+        str: The generation prompt asking the model to solve the problem.
+    """
     return GENERATE_PROMPT.format(problem_text=problem_text)
 
 
 def build_verify_prompt(problem_text: str, solution: str) -> str:
-    """Build the verification prompt."""
+    """Build the verification prompt.
+
+    Args:
+        problem_text (str): The math problem.
+        solution (str): The proposed solution text.
+
+    Returns:
+        str: The prompt asking the model to verify the proposed solution.
+    """
     return VERIFY_PROMPT.format(problem_text=problem_text, solution=solution)
 
 
 def build_nl_verify_prompt(problem_text: str, solution: str) -> str:
-    """Build the natural language verifier prompt."""
+    """Build the natural language verifier prompt.
+
+    Args:
+        problem_text (str): The math problem.
+        solution (str): The proposed solution text.
+
+    Returns:
+        str: The prompt asking the model to perform a rigorous NL review of the solution.
+    """
     return NL_VERIFY_PROMPT.format(problem_text=problem_text, solution=solution)
 
 
 def build_correct_prompt(
     problem_text: str, previous_solution: str, error_message: str
 ) -> str:
-    """Build the self-correction prompt."""
+    """Build the self-correction prompt.
+
+    Args:
+        problem_text (str): The math problem.
+        previous_solution (str): The incorrect solution that needs correction.
+        error_message (str): The error details from sandbox execution or NL verifier.
+
+    Returns:
+        str: The self-correction prompt guiding the model to fix the mistakes.
+    """
     return CORRECT_PROMPT.format(
         problem_text=problem_text,
         previous_solution=previous_solution,
@@ -396,9 +488,19 @@ def build_correct_prompt(
 
 
 def extract_answer(solution_text: str) -> str | None:
-    """
-    Extract the final answer from a solution text.
+    """Extract the final answer from a solution text.
+
     Looks for the pattern: **ANSWER: [value]**
+
+    Args:
+        solution_text (str): The full text of the model's generated solution.
+
+    Returns:
+        str | None: The extracted answer string, or None if the pattern is not found.
+
+    Note:
+        Blindspot: The regex `(.*?)` is very permissive and can extract trailing punctuation,
+        spaces, or reasoning text if the model deviates slightly from the requested format.
     """
     # Try strict pattern first
     match = re.search(
@@ -418,11 +520,19 @@ def extract_answer(solution_text: str) -> str | None:
 
 
 def extract_nl_verdict(verifier_output: str) -> tuple[bool, str]:
-    """
-    Extract the verdict from the natural language verifier.
+    """Extract the verdict from the natural language verifier.
+
+    Args:
+        verifier_output (str): The output generated by the NL verifier prompt.
 
     Returns:
-        (is_correct, explanation)
+        tuple[bool, str]: A tuple where the first element is a boolean indicating whether
+                          the verifier deemed the solution correct (True) or not (False),
+                          and the second element is an explanation or error message.
+
+    Note:
+        Bug/Blindspot: The fallback mechanism here "treating as pass" when the verdict is
+        uncertain essentially ignores the verifier if the model fails to output standard tags.
     """
     if "VERDICT: CORRECT" in verifier_output.upper():
         return True, "NL Verifier: Solution is correct"

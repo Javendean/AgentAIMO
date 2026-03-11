@@ -71,17 +71,22 @@ def execute_code(
     timeout: int = 30,
     max_output_bytes: int = 50_000,
 ) -> tuple[bool, str, str]:
-    """
-    Execute Python code in a sandboxed subprocess.
+    """Execute Python code in a sandboxed subprocess.
 
     Args:
-        code: Python code string to execute.
-        timeout: Maximum execution time in seconds (default: 30).
-        max_output_bytes: Max bytes of stdout/stderr to capture.
+        code (str): Python code string to execute.
+        timeout (int, optional): Maximum execution time in seconds (default: 30).
+        max_output_bytes (int, optional): Max bytes of stdout/stderr to capture (default: 50,000).
 
     Returns:
-        Tuple of (success: bool, stdout: str, stderr: str).
-        success is True if the code ran without errors.
+        tuple[bool, str, str]: A tuple of (success, stdout, stderr).
+                               `success` is True if the code ran without errors (returncode == 0).
+
+    Note:
+        Blindspot: The sandbox relies on Python-level restrictions (`sys.modules`, overriding builtins)
+        and environment stripping. This is NOT a secure sandbox against malicious code.
+        It is only designed to prevent accidents (like infinite loops or simple file I/O).
+        A sophisticated model could easily bypass this using reflection or C-extensions.
     """
     # Combine safety preamble with user code
     full_code = SAFETY_PREAMBLE + "\n# === USER CODE BELOW ===\n" + code
@@ -124,11 +129,21 @@ def execute_code(
 
 
 def extract_code_blocks(text: str) -> list[str]:
-    """
-    Extract Python code blocks from LLM-generated markdown text.
+    """Extract Python code blocks from LLM-generated markdown text.
 
-    Handles both ```python ... ``` and ``` ... ``` blocks.
-    Returns a list of code strings.
+    Handles both ` ```python ... ``` ` and ` ``` ... ``` ` blocks, as well
+    as hallucinated `assistantcommentary` tags.
+
+    Args:
+        text (str): The markdown text containing code blocks.
+
+    Returns:
+        list[str]: A list of extracted Python code strings.
+
+    Note:
+        Blindspot: The regex `r"```(?:python|py)\\s*\\n(.*?)```"` stops at the first ` ``` `.
+        If the model outputs nested backticks (despite instructions not to), it will truncate
+        the code. The backup keyword-based matching for generic blocks is also very brittle.
     """
     import re
 
@@ -175,12 +190,21 @@ def extract_code_blocks(text: str) -> list[str]:
 
 
 def run_verification(solution_text: str, timeout: int = 30) -> tuple[bool, str]:
-    """
-    Extract and execute all code blocks from a solution.
+    """Extract and execute all code blocks from a solution.
+
+    Args:
+        solution_text (str): The full text of the model's generated solution.
+        timeout (int, optional): The timeout in seconds for executing each block. Defaults to 30.
 
     Returns:
-        Tuple of (all_passed: bool, combined_output: str).
-        combined_output includes both stdout and any errors.
+        tuple[bool, str]: A tuple of (all_passed, combined_output).
+                          `all_passed` is True if all extracted code blocks executed without error.
+                          `combined_output` contains the concatenated stdout and stderr.
+
+    Note:
+        Critical Assumption: This merely checks if the code executed without throwing an exception.
+        "Code executed successfully" IS NOT equivalent to "math verified". The model might write code
+        that evaluates `2+2` but answers a complex geometry question, and this function would return True.
     """
     blocks = extract_code_blocks(solution_text)
 
