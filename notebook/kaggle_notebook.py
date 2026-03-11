@@ -138,20 +138,9 @@ CANARY_PROBLEM = {
 }
 
 def run_canary_test(researcher_instance):
-    """Runs a 'Canary' logic test to detect broken 4-bit quantization or vLLM kernel issues.
-
-    Args:
-        researcher_instance (DeepResearcher): An instantiated DeepResearcher object to test.
-
-    Returns:
-        bool: True if passed, False if environment is 'Hostile' (throttled or logic failure).
-
-    Note:
-        Blindspot: The canary strictly checks for exactly `\\boxed{809}` in the output. If the model
-        answers correctly but formats it slightly differently (e.g. `ANSWER: 809`), the canary
-        will incorrectly flag a logic collapse and trigger the fallback.
-        Additionally, relying on a static problem makes this test highly vulnerable to data leakage
-        if the model memorized the specific AIME problem text.
+    """
+    Runs a 'Canary' logic test to detect broken 4-bit quantization or vLLM kernel issues.
+    Returns: True if passed, False if environment is 'Hostile'.
     """
     import time
     logger.info("🦜 RUNNING CANARY TEST (AIME 2024 Problem 3)...")

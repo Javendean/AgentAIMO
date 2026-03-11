@@ -5,15 +5,8 @@ from agent.sandbox import extract_code_blocks
 from agent.deep_researcher import DeepResearcher
 
 class TestHallucinationFix(unittest.TestCase):
-    """Test suite ensuring the agent can recover from hallucinated tool calls."""
-
     def test_parser_adapter_extracts_hallucinated_code(self):
-        """Test that extract_code_blocks captures the assistantcommentary format.
-
-        Note:
-            Blindspot: This only tests a very specific hallucination format (`assistantcommentary`).
-            If the model invents a new tag (e.g. `<tool_call>`), the regex will fail completely.
-        """
+        """Test that extract_code_blocks captures the assistantcommentary format."""
         
         # Scenario 1: Inline header + code
         text1 = "Let's compute.\n\nassistantcommentary to=python codes=2.5\nt=24\nprint(s*t)\n"
@@ -34,13 +27,7 @@ class TestHallucinationFix(unittest.TestCase):
         self.assertIn("print(1)", blocks3[0])
 
     def test_forceful_feedback_logic(self):
-        """Test that the feedback loop detects the banned format.
-
-        Note:
-            Blindspot: This test manually mocks the string matching logic from `deep_researcher.py`
-            rather than importing and running the actual controller function, meaning it could silently
-            pass here while failing in production if the main file logic drifts.
-        """
+        """Test that the feedback loop detects the banned format."""
         # Mocking the logic since we can't easily instantiate the full Researcher with vLLM
         previous_solution = "assistantcommentary to=python code\nprint(1)"
         
