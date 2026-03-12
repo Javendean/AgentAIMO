@@ -36,11 +36,11 @@ These are manual exports, chat logs from web interfaces, or raw text analysis.
 | `rubric.md` | A specific grading rubric. | move to research/raw later |
 
 ## 3. Jupyter Notebooks (.ipynb)
-Exploratory notebooks that are not part of the core Kaggle execution harness.
+Exploratory notebooks that are not part of the core Kaggle execution harness, OR contain divergent parallel workflows.
 
 | File | Purpose | Recommendation |
 | :--- | :--- | :--- |
-| `44-50-aimo3-skills-optional-luck-required.ipynb` | Highly specific, likely a post-mortem or experimental data analysis notebook. | move to research/notebooks later |
+| `44-50-aimo3-skills-optional-luck-required.ipynb` | **WARNING:** This is NOT archival noise. It contains an entirely distinct `AIMO3Solver` loop, representing meaningful package-vs-notebook divergence. | Do not arbitrarily move; treat as a separate solver workflow. |
 
 ## 4. Suspicious / Unclear Python Scripts
 Root-level scripts that appear to be one-off utilities rather than part of a cohesive module.

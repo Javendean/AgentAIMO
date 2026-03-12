@@ -31,7 +31,8 @@ These files represent valuable research inputs (like academic papers or manual n
 | `mcts_rubric_analysis.md` | `research/docs/` | Conceptual documentation. | Safe |
 | `Refining LLM Rubric for Human Reasoning.md`| `research/docs/` | Conceptual documentation. | Safe |
 | `rubric.md` | `research/docs/` | Grading guidelines. | Safe |
-| `44-50-aimo3-skills-optional-luck-required.ipynb` | `research/notebooks/` | Exploratory notebook, separate from Kaggle execution. | Moderate (Verify if data paths inside notebook are relative to root) |
+
+*Note: The root-level notebook `44-50-aimo3-skills-optional-luck-required.ipynb` has been explicitly removed from the "Moderate" move candidate list, as it represents a fully active parallel `AIMO3Solver` workflow rather than legacy or exploratory noise. It should not be moved until the core architecture is formally unified.*
 
 ---
 

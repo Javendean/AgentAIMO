@@ -26,10 +26,10 @@ This document tracks identified architectural, logical, and environmental risks 
 
 ### RISK-03: Notebook / Mainline Divergence
 *   **Severity:** Medium
-*   **Affected Files:** `notebook/kaggle_notebook.py`, `agent/deep_researcher.py`
-*   **Why it Matters:** The `kaggle_notebook.py` script acts as the true `main.py` for production runs, but it lives outside the core package and contains hardcoded, critical logic (the "Canary Test") that determines whether the 120B model or the 72B model is used.
-*   **Likely Consequence:** Changes to the core agent package may not be reflected or tested properly against the Kaggle execution harness. The Canary Test logic cannot be easily unit-tested via `pytest` because it is buried in a standalone script.
-*   **Recommended Next Action:** Refactor the Kaggle notebook logic into a standardized, testable entry point within the `agent` package, isolating environment setup from the core sprint execution flow.
+*   **Affected Files:** `notebook/kaggle_notebook.py`, `44-50-aimo3-skills-optional-luck-required.ipynb`, `agent/deep_researcher.py`
+*   **Why it Matters:** The `kaggle_notebook.py` script acts as the true `main.py` for production runs, but it lives outside the core package and contains hardcoded, critical logic (the "Canary Test") that determines whether the 120B model or the 72B model is used. The root notebook (`44-50...ipynb`) is NOT archival noise—it introduces massive package-vs-notebook divergence by housing an entirely parallel `AIMO3Solver` loop.
+*   **Likely Consequence:** Changes to the core agent package may not be reflected or tested properly against the Kaggle execution harness, and future developers may mistakenly rely on or edit the completely separate solver loop present in the notebook.
+*   **Recommended Next Action:** Treat the root-level notebook divergence explicitly. Standardize the execution loop into `agent/` and unify the execution path to remove the two competing implementation workflows. Additionally, abstract the fail-fast canary logic into a testable format.
 *   **Phase:** Implementation-phase issue
 
 ---
@@ -37,9 +37,9 @@ This document tracks identified architectural, logical, and environmental risks 
 ### RISK-04: Weak Sandbox Security (Local-Path / Portability Risks)
 *   **Severity:** Medium
 *   **Affected Files:** `agent/sandbox.py`
-*   **Why it Matters:** The sandbox relies on simple Python-level string matching and module blocklisting (via `builtins.__import__`). It completely unblocks `ctypes`, `threading`, and `gc` to appease `sympy` imports, severely weakening the isolation.
-*   **Likely Consequence:** A sophisticated LLM could easily bypass the sandbox using reflection or C-extensions, potentially executing malicious code, reading local host files, or crashing the Kaggle container outright.
-*   **Recommended Next Action:** If full isolation is required, move from a Python-level blocklist to a robust OS-level containerization solution (e.g., Docker, gVisor) for executing untrusted code.
+*   **Why it Matters:** The sandbox relies on simple Python-level string matching and module blocklisting (via `builtins.__import__`). This provides weak, Python-level isolation rather than an actual security boundary.
+*   **Likely Consequence:** A sophisticated LLM could bypass the blocklist using standard Python reflection (e.g., navigating `__subclasses__`) to break out of the sandbox, execute arbitrary host commands, or access the file system.
+*   **Recommended Next Action:** If full isolation is required, move from a Python-level blocklist to a robust OS-level containerization solution (e.g., Docker, gVisor) for executing untrusted code, or utilize a restricted AST execution engine.
 *   **Phase:** Implementation-phase issue
 
 ---

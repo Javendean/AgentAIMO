@@ -17,6 +17,7 @@ The `notebook/` directory contains the script intended to be run in the actual K
 
 *   **`notebook/kaggle_notebook.py`**: The Kaggle execution script. It handles offline pip installs, initializes the `DeepResearcher`, and contains the highly rigid "Canary Test" logic used to trigger fallback models.
 *   **Divergence Risk**: The Kaggle notebook acts as the true `main.py` but is structurally isolated from the `agent/` package. The "Canary Test" logic is hardcoded directly into this notebook rather than being a modular component of the agent, making it difficult to test in standard CI/CD pipelines.
+*   **Note on `44-50-aimo3-skills-optional-luck-required.ipynb`**: Do not dismiss this root-level notebook as archival noise. It contains a functionally independent `AIMO3Solver` loop that bypasses the core package, representing meaningful package-vs-notebook divergence and a completely separate solver workflow.
 
 ## 3. Analysis and Grading Pipeline
 

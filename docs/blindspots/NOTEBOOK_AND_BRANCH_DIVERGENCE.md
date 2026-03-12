@@ -15,7 +15,7 @@ This document exposes divergence between notebook and package code, local-vs-Git
 - What could be misleading: A reader might assume that the two files represent the same execution logic, just in different formats. In reality, they are two different implementations of the core algorithm.
 - Potential consequence: Changes to `agent/deep_researcher.py` will not affect submissions made using the root notebook. Conversely, improvements made in the root notebook are invisible to the package code.
 - How to verify or falsify it: Compare the implementation of `_select_answer` in the root notebook with `_majority_vote` in `agent/deep_researcher.py`.
-- Recommended next step: Determine which solver is canonical and delete or clearly archive the other.
+- Recommended next step: Make repo map / artifact docs state clearly that there is meaningful notebook-vs-package divergence and that the notebook path may represent a separate solver workflow. Determine which solver is canonical and eventually delete or clearly archive the other.
 - Blocks future work? yes
 
 - Blindspot ID: BS-DIV-002
@@ -30,5 +30,5 @@ This document exposes divergence between notebook and package code, local-vs-Git
 - What could be misleading: A developer running the package code locally might assume they are running the identical fault-tolerant system used on Kaggle, but they are missing the canary test entirely.
 - Potential consequence: The package code is brittle to model logic collapse or hardware OOMs, while the notebook deployment script attempts to handle them. This creates a local-vs-production mismatch.
 - How to verify or falsify it: Search for `run_canary_test` or model swapping logic within `agent/`.
-- Recommended next step: Move the canary testing and fail-fast fallback logic into the `DeepResearcher` class itself, making it configurable.
+- Recommended next step: Move the canary testing and fail-fast fallback logic into the `DeepResearcher` class itself, making it configurable. Soften any documentation language that implies the canary expects a specific literal string (like exactly `\boxed{809}`), and focus on the overall brittleness and narrow acceptance logic of the canary test.
 - Blocks future work? no
