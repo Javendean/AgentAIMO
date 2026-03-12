@@ -1,56 +1,86 @@
-# Move Candidates Manifest
+# Move Candidates Plan
 
-This document proposes a future restructuring plan to cleanly separate active source code from data artifacts, research materials, and legacy noise.
-
-**Important Note:** This is a *recommendation* document only. No files have been moved in the current task. Moving these files carries varying degrees of risk depending on whether hardcoded paths exist in the Python scripts or Kaggle notebooks.
+This document outlines a conservative, risk-adjusted plan for restructuring the repository to separate active code from archived artifacts.
 
 ---
 
-## 1. High Priority (Safe Moves)
-These are static, manual text dumps or chat transcripts that are highly unlikely to be referenced by any programmatic pipeline.
+## 1. Proposed Minimal Target Structure
 
-| Current Path | Proposed Location | Why | Risk Level |
-| :--- | :--- | :--- | :--- |
-| `BrowserChat.txt` | `_attic/noise/` | Unstructured manual export, creates root clutter. | Safe |
-| `GeminiChat.txt` | `_attic/noise/` | Unstructured manual export, creates root clutter. | Safe |
-| `c2_sorted_check.txt` | `_attic/noise/` | Looks like a manual terminal output or diff. | Safe |
-| `new_context_content.txt` | `_attic/noise/` | Unclear scratchpad file. | Safe |
-| `research_data2.jsonl.bak` | `_attic/noise/` | Redundant backup file. | Safe |
+To isolate the active packages from the legacy noise, the following minimal top-level directories should be established:
 
----
-
-## 2. Medium Priority (Research / Raw Materials)
-These files represent valuable research inputs (like academic papers or manual notes) but do not belong in the root directory.
-
-| Current Path | Proposed Location | Why | Risk Level |
-| :--- | :--- | :--- | :--- |
-| `2511.01846v1_Part1.txt` | `research/raw/` | Academic paper text extract. | Safe |
-| `pdf1.txt`, `pdf2.txt`, `pdf3.txt` | `research/raw/` | PDF text extracts. | Safe |
-| `pdf_abstracts.txt` | `research/raw/` | PDF text extracts. | Safe |
-| `annotation_research_context.md` | `research/docs/` | Conceptual documentation. | Safe |
-| `mcts_rubric_analysis.md` | `research/docs/` | Conceptual documentation. | Safe |
-| `Refining LLM Rubric for Human Reasoning.md`| `research/docs/` | Conceptual documentation. | Safe |
-| `rubric.md` | `research/docs/` | Grading guidelines. | Safe |
-| `44-50-aimo3-skills-optional-luck-required.ipynb` | `research/notebooks/` | Exploratory notebook, separate from Kaggle execution. | Moderate (Verify if data paths inside notebook are relative to root) |
+```text
+agent/          ← active code (unchanged)
+analysis/       ← active code (unchanged)
+tests/          ← active tests (unchanged)
+docs/           ← audit documents (unchanged)
+archive/        ← legacy artifacts and noise (new)
+notebooks/      ← divergent or experimental notebooks (new)
+```
 
 ---
 
-## 3. High Risk (Data Pipelines & Executables)
-These files are generated datasets or the utility scripts that generate them. Moving them is highly likely to break hardcoded relative paths inside the scripts (e.g., `with open("research_data.jsonl")`).
+## 2. Batch 1: Safe Operations (Zero Risk)
 
-| Current Path | Proposed Location | Why | Risk Level |
-| :--- | :--- | :--- | :--- |
-| `research_data.jsonl` | `data/raw/` | Core system output. | Risky (Referenced implicitly by analysis scripts) |
-| `dpo_correction_dataset*.jsonl` | `data/processed/` | Downstream training artifacts. | Risky (Likely referenced by a trainer script not present here) |
-| `create_preference_dataset.py` | `scripts/` | Data pipeline utility. | Risky (Will need internal path updates) |
-| `clean_research_data.py` | `scripts/` | Data pipeline utility. | Risky (Will need internal path updates) |
-| `analyze_failures.py` | `scripts/` | Analysis utility. | Risky (Will need internal path updates) |
-| `create_submission_zip.py` | `scripts/` | Kaggle packaging utility. | Risky (Likely assumes it is running from root to zip the `agent/` folder) |
-| `prompt_patch.txt` | `agent/configs/` | The auto-generated patch file. | Risky (Referenced by `analyze_results.py` and `kaggle_notebook.py`) |
+The following files are guaranteed safe to move. They are not imported by any Python file, are not referenced by any hardcoded `open()` paths, and moving them will break zero tests.
 
-### Recommended Migration Strategy
-When implementing these moves in a future phase:
-1. Create the target directories (`_attic/noise/`, `research/raw/`, `data/raw/`, `scripts/`).
-2. Move the **Safe** tier first.
-3. Move the **Moderate** tier next, inspecting the Jupyter notebook for broken links.
-4. For the **Risky** tier, use an IDE or `grep` to trace all references to `research_data.jsonl` and `prompt_patch.txt` before moving them, ensuring that scripts are updated to use absolute paths (via `pathlib`) or parameterized arguments.
+**Rollback Strategy:** `git revert HEAD` (or specifically `git checkout HEAD^1 -- <file>`)
+
+| Current Path | Proposed Target | Justification |
+| :--- | :--- | :--- |
+| `BrowserChat.txt` | `archive/` | Unreferenced manual text transcript. |
+| `GeminiChat.txt` | `archive/` | Unreferenced manual text transcript. |
+| `c2_sorted_check.txt` | `archive/` | Unreferenced debug output dump. |
+| `research_data2.jsonl.bak` | `archive/` | Unreferenced backup file. |
+| `syntax_errors.txt` | `archive/` | Unreferenced text dump. |
+| `analysis/analysis_report.txt`| `archive/` | Unreferenced output dump from `analyze_results.py`. |
+| `extract_top_leaderboard.py` | `archive/` | Unreferenced standalone web scraper. |
+| `extract_syntax_errors.py` | `archive/` | Unreferenced single-use regex script. |
+| `fix_lines_16_91.py` | `archive/` | Unreferenced, highly specific string replacement hack. |
+
+---
+
+## 3. Batch 2: Moderate Risk (Notebooks & Research Scripts)
+
+These files appear to be standalone, but moving them might break local developer workflows if they have terminal aliases pointing to the root directory.
+
+**Rollback Strategy:** `git revert HEAD`
+
+| Current Path | Proposed Target | Justification / Risk |
+| :--- | :--- | :--- |
+| `44-50-aimo3-skills-optional-luck-required.ipynb` | `notebooks/` | This massive notebook duplicates the core `agent/` architecture. It is safe to move structurally, but it contains unique Kaggle evaluation logic that must be extracted to the main `agent/` package before it is archived entirely. |
+| `2511.01846v1_Part1.txt` | `archive/` | Unreferenced raw PDF text. |
+| `pdf1.txt`, `pdf2.txt`, `pdf3.txt` | `archive/` | Unreferenced raw PDF texts. |
+| `pdf_abstracts.txt` | `archive/` | Unreferenced text extracts. |
+| `annotation_research_context.md` | `archive/` | Unreferenced conceptual markdown. |
+| `mcts_rubric_analysis.md` | `archive/` | Unreferenced conceptual markdown. |
+| `Refining LLM Rubric for Human Reasoning.md`| `archive/` | Unreferenced conceptual markdown. |
+| `rubric.md` | `archive/` | Unreferenced grading markdown. |
+
+---
+
+## 4. Batch 3: Requires Refactoring Before Move (High Risk)
+
+**DO NOT MOVE** these files in a simple `git mv` commit. They contain hardcoded relative paths or are implicitly relied upon by other scripts. Moving them will immediately break the scripts that depend on them.
+
+| Current Path | Blocking Dependency | Required Action Before Move |
+| :--- | :--- | :--- |
+| `dpo_correction_dataset_v4.jsonl` | `create_preference_dataset.py` | Update `open('dpo_correction_dataset_v4.jsonl', 'w')` to accept an output path argument via `argparse`. |
+| `research_data2.jsonl` | `verify_solved.py` | Update `open('research_data2.jsonl', 'r')` to use `argparse`. |
+| `create_submission_zip.py` | Relies on being run from repo root | Update the script's `os.walk` to target `Path(__file__).parent.parent / "agent"` instead of assuming the current working directory. |
+| `prompt_patch.txt` | `analysis/analyze_results.py` | Ensure the Kaggle notebook's expected upload path matches the new target location (e.g., `agent/configs/prompt_patch.txt`). |
+
+---
+
+## 5. Batch 4: Human Decision Required (Uncertain)
+
+The purpose of these files is ambiguous or overlaps with existing core modules.
+
+| Current Path | Question to Resolve |
+| :--- | :--- |
+| `test_safeguard.py` | Should this be formally integrated into `tests/test_agent.py`, or is it an obsolete scratchpad that should be archived? |
+| `analyze_failures.py` | This script seems to overlap with `analysis/analyze_results.py`. Should they be merged into a single CLI tool? |
+| `new_context_content.txt` | What pipeline generates or consumes this scratchpad text? |
+
+---
+
+**This plan requires human review before any operations are executed. No files will be moved by this task.**

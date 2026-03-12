@@ -48,8 +48,14 @@ from agent.deep_researcher import DeepResearcher, TimeLimitExceeded
 _passed = 0
 _failed = 0
 
+# Note on Testing Blindspots:
+# 1. Lack of robust mocking for `vLLM` inference. Dry runs test pipeline glue but NOT token generation logic.
+# 2. Hardcoded timeouts in tests are prone to flakiness in CI environments.
+# 3. Code verification tests rely on exact string matches, making them brittle to minor Python output changes.
+# 4. No coverage checking configured.
 
 def assert_true(condition, msg=""):
+    """Assert a boolean condition and update the global test counters."""
     global _passed, _failed
     if condition:
         _passed += 1
@@ -59,14 +65,17 @@ def assert_true(condition, msg=""):
 
 
 def assert_equal(actual, expected, msg=""):
+    """Assert two values are equal."""
     assert_true(actual == expected, f"{msg}: expected {expected!r}, got {actual!r}")
 
 
 def assert_in(needle, haystack, msg=""):
+    """Assert a string contains a substring."""
     assert_true(needle in haystack, f"{msg}: {needle!r} not found")
 
 
 def assert_not_none(val, msg=""):
+    """Assert a value is not None."""
     assert_true(val is not None, f"{msg}: was None")
 
 
@@ -99,9 +108,16 @@ def test_sandbox_allows_math():
 
 def test_sandbox_allows_sympy():
     print("[TEST] Sandbox allows sympy")
+
     passed, output = run_verification(
         "```python\nfrom sympy import isprime\nprint(isprime(17))\n```"
     )
+    # BLINDSPOT / KNOWN BUG:
+    # On newer versions of Python (like 3.12+), SymPy internals load modules (e.g., `ctypes`, `os`, `shutil`)
+    # that are strictly blocked by the `_BLOCKED_MODULES` set in `agent/sandbox.py`.
+    # As a result, this test will fail on newer environments even though `sympy` is conceptually "allowed".
+    # Because our instructions are to document bugs rather than fix them, this test will currently
+    # fail when executed.
     assert_true(passed, "sympy should work")
 
 def test_sandbox_timeout():

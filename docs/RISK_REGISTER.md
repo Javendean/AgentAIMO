@@ -1,15 +1,15 @@
 # Engineering Risk Register
 
-This document tracks identified architectural, logical, and environmental risks within the DeepResearcher repository.
+This document tracks identified architectural, logical, and environmental risks within the DeepResearcher codebase.
 
 ---
 
 ### RISK-01: Verification Semantics Conflation
 *   **Severity:** High
-*   **Affected Files:** `agent/sandbox.py`, `agent/deep_researcher.py`
-*   **Why it Matters:** The agent fundamentally equates "code executed successfully" (`returncode == 0`) with "the mathematical logic is verified." The sandbox only catches Python exceptions, not flawed mathematical reasoning or irrelevant code.
-*   **Likely Consequence:** The model will hallucinate an incorrect mathematical derivation, write trivial Python code (like `print(2+2)`), and the system will tag the attempt as `verification_passed=True`, leading to false positives and poisoning the majority vote.
-*   **Recommended Next Action:** Decouple execution success from verification success. Introduce typed checker outputs (e.g., `code_executed_successfully` vs `checker_assertion_passed`).
+*   **Affected Files:** `agent/sandbox.py` (`run_verification`), `agent/deep_researcher.py`
+*   **Why it Matters:** The system equates "Python code executed without throwing an exception" (`returncode == 0`) with "mathematical logic verified."
+*   **Likely Consequence:** If the model hallucinates an incorrect mathematical derivation but writes trivial Python code (like `print(2+2)`), the system tags the attempt as `verification_passed=True`. This poisons the majority vote tally by artificially boosting the weight of bad reasoning.
+*   **Recommended Next Action:** Decouple execution success from verification success by introducing typed checker outputs (e.g., `code_executed_successfully` vs `checker_assertion_passed`).
 *   **Phase:** Implementation-phase issue
 
 ---
@@ -17,9 +17,9 @@ This document tracks identified architectural, logical, and environmental risks 
 ### RISK-02: Answer Extraction Ambiguity and Pollution
 *   **Severity:** High
 *   **Affected Files:** `agent/prompts.py` (`extract_answer`), `agent/deep_researcher.py`
-*   **Why it Matters:** The regex `r"\*\*ANSWER:\s*(.+?)\*\*"` is overly permissive. If the model appends prose (e.g., `**ANSWER: 42 because x is positive**`), the extracted string is polluted.
-*   **Likely Consequence:** The majority voting mechanism (`Counter`) relies on exact string matches. Polluted answers will fracture the vote tally, causing the agent to falsely believe no consensus was reached, triggering unnecessary and expensive fallback loops.
-*   **Recommended Next Action:** Implement a robust answer canonicalization pipeline before tallying votes. Strip trailing punctuation, normalize LaTeX strings, and handle equivalent mathematical forms (e.g., `1/2` vs `0.5`).
+*   **Why it Matters:** The regex `r"\*\*ANSWER:\s*(.+?)\*\*"` is extremely permissive. If the model outputs `**ANSWER: 42 because x > 0**`, the entire phrase is extracted. Furthermore, no normalization is applied (so `"42"` and `"42.0"` are tracked as different answers).
+*   **Likely Consequence:** The majority voting mechanism relies on exact string matches. Polluted or un-normalized answers will fracture the vote tally, causing the agent to falsely believe no consensus was reached, triggering expensive and unnecessary fallback loops.
+*   **Recommended Next Action:** Implement a robust answer canonicalization pipeline before tallying votes to strip punctuation, handle LaTeX equivalents, and reject trailing prose.
 *   **Phase:** Implementation-phase issue
 
 ---
@@ -27,29 +27,29 @@ This document tracks identified architectural, logical, and environmental risks 
 ### RISK-03: Notebook / Mainline Divergence
 *   **Severity:** Medium
 *   **Affected Files:** `notebook/kaggle_notebook.py`, `agent/deep_researcher.py`
-*   **Why it Matters:** The `kaggle_notebook.py` script acts as the true `main.py` for production runs, but it lives outside the core package and contains hardcoded, critical logic (the "Canary Test") that determines whether the 120B model or the 72B model is used.
-*   **Likely Consequence:** Changes to the core agent package may not be reflected or tested properly against the Kaggle execution harness. The Canary Test logic cannot be easily unit-tested via `pytest` because it is buried in a standalone script.
-*   **Recommended Next Action:** Refactor the Kaggle notebook logic into a standardized, testable entry point within the `agent` package, isolating environment setup from the core sprint execution flow.
+*   **Why it Matters:** The `kaggle_notebook.py` script acts as the true `main.py` for production runs. It contains hardcoded, critical branching logic (the "Canary Test") to determine whether to use the primary 120B model or fall back to a 72B model.
+*   **Likely Consequence:** Because this logic lives outside the testable `agent/` package, changes to the core agent may not be reflected in Kaggle runs, and the Canary Test cannot be covered by standard continuous integration tests.
+*   **Recommended Next Action:** Refactor the Kaggle notebook logic into a standardized entry point within the `agent` package, isolating environment setup from the core reasoning flow.
 *   **Phase:** Implementation-phase issue
 
 ---
 
-### RISK-04: Weak Sandbox Security (Local-Path / Portability Risks)
+### RISK-04: Weak Sandbox Security (Local-Path/Portability Risks)
 *   **Severity:** Medium
 *   **Affected Files:** `agent/sandbox.py`
-*   **Why it Matters:** The sandbox relies on simple Python-level string matching and module blocklisting (via `builtins.__import__`). It completely unblocks `ctypes`, `threading`, and `gc` to appease `sympy` imports, severely weakening the isolation.
-*   **Likely Consequence:** A sophisticated LLM could easily bypass the sandbox using reflection or C-extensions, potentially executing malicious code, reading local host files, or crashing the Kaggle container outright.
-*   **Recommended Next Action:** If full isolation is required, move from a Python-level blocklist to a robust OS-level containerization solution (e.g., Docker, gVisor) for executing untrusted code.
+*   **Why it Matters:** The sandbox relies on basic Python-level module blocklisting via `builtins.__import__`. To support math libraries like `sympy`, it leaves modules like `ctypes`, `threading`, and `gc` completely unblocked.
+*   **Likely Consequence:** An adversarial or highly hallucinating LLM could use C-extensions or reflection to bypass the sandbox, potentially crashing the Kaggle container or accessing local files.
+*   **Recommended Next Action:** Move from a Python-level blocklist to robust OS-level containerization (e.g., Docker, gVisor) for executing untrusted code.
 *   **Phase:** Implementation-phase issue
 
 ---
 
-### RISK-05: Brittle Regex Parsing
+### RISK-05: Weak Regression Coverage
 *   **Severity:** High
-*   **Affected Files:** `agent/sandbox.py` (`extract_code_blocks`)
-*   **Why it Matters:** The regex `r"```(?:python|py)\s*\n(.*?)```"` stops at the first closing backticks. If the LLM generates nested backticks (despite instructions not to), the code block is prematurely truncated.
-*   **Likely Consequence:** Truncated code blocks will inevitably fail with a `SyntaxError` in the sandbox, forcing the agent into expensive self-correction loops for a formatting error rather than a logical error.
-*   **Recommended Next Action:** Replace simple regex matching with a robust markdown parser capable of handling nested blocks and edge cases.
+*   **Affected Files:** `tests/test_agent.py`, `tests/test_hallucination_fix.py`
+*   **Why it Matters:** The test suite is extremely sparse. It only performs shallow "dry runs" without mocking varying LLM responses.
+*   **Likely Consequence:** The recursive logic of the self-correction loops, GenSelect pathways, and threshold consensus checks are virtually untested. Refactoring `deep_researcher.py` carries a high risk of introducing silent logical regressions.
+*   **Recommended Next Action:** Implement unit tests that mock `vLLM` outputs to ensure the orchestration loops route correctly under simulated failures and edge cases.
 *   **Phase:** Implementation-phase issue
 
 ---
@@ -57,9 +57,9 @@ This document tracks identified architectural, logical, and environmental risks 
 ### RISK-06: Noisy Artifact / Dataset Confusion
 *   **Severity:** Low
 *   **Affected Files:** Root directory (`*.jsonl`, `*.txt`, `*.py`)
-*   **Why it Matters:** The root directory is heavily polluted with generated datasets, DPO artifacts, raw text dumps, and experimental scripts that have no clear organization.
-*   **Likely Consequence:** New developers (or AI agents) will struggle to distinguish between active production code, legacy experimental scripts, and critical training artifacts. This increases the risk of accidentally deleting or modifying important data.
-*   **Recommended Next Action:** Execute the manifest defined in `docs/MOVE_CANDIDATES.md` to cleanly separate source code from data and archival materials.
+*   **Why it Matters:** The root directory is heavily polluted with a mix of production code, legacy experimental scripts, generated DPO datasets, and raw text dumps.
+*   **Likely Consequence:** High cognitive overhead for developers. Increased risk of accidentally modifying or deleting critical training datasets or configuration files (like `prompt_patch.txt`).
+*   **Recommended Next Action:** Execute a structural cleanup based on the `docs/MOVE_CANDIDATES.md` manifest to cleanly separate source code from data.
 *   **Phase:** Implementation-phase issue
 
 ---
@@ -67,17 +67,7 @@ This document tracks identified architectural, logical, and environmental risks 
 ### RISK-07: Overfitting / Reward-Hacking from Future Schema Mining
 *   **Severity:** Medium
 *   **Affected Files:** `analysis/analyze_results.py`
-*   **Why it Matters:** The local analysis pipeline currently generates "System Prompt Patches" based on hardcoded heuristics (e.g., counting `SyntaxError` strings in the sandbox output).
-*   **Likely Consequence:** If this feedback loop is automated further without semantic understanding, the model will likely learn to "hack" the metric—for instance, by outputting code that runs perfectly but does no math, solely to avoid the `SyntaxError` feedback penalty in the system prompt.
-*   **Recommended Next Action:** Enhance the analysis pipeline to evaluate the semantic correctness of the reasoning trace, not just the mechanical execution state of the sandbox.
-*   **Phase:** Implementation-phase issue
-
----
-
-### RISK-08: Weak Regression Coverage
-*   **Severity:** High
-*   **Affected Files:** `tests/test_agent.py`, `tests/test_hallucination_fix.py`
-*   **Why it Matters:** The test suite is extremely sparse. It only performs shallow dry runs without mocking LLM responses or verifying the actual recursive logic of the self-correction loops.
-*   **Likely Consequence:** Refactoring the core logic (e.g., modifying `_research_problem_inner`) carries a very high risk of introducing silent regressions, as the current tests only verify basic prompt string formatting and sandbox blocklists.
-*   **Recommended Next Action:** Implement robust unit tests mocking `vllm` to ensure majority voting, GenSelect, and self-correction loops route correctly under different mocked LLM behaviors.
+*   **Why it Matters:** The local analysis pipeline generates "System Prompt Patches" based on hardcoded mechanical heuristics (e.g., if `SyntaxError` count > 2, add a rule to check parentheses).
+*   **Likely Consequence:** If this feedback loop is automated, the model may learn to "hack" the mechanical metrics—for instance, by outputting valid Python code that does absolutely no math, solely to avoid the `SyntaxError` feedback penalty.
+*   **Recommended Next Action:** Enhance the analysis pipeline to evaluate the semantic correctness of the reasoning trace, rather than just parsing Python error logs.
 *   **Phase:** Implementation-phase issue
