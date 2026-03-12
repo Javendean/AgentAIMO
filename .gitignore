@@ -1,20 +1,45 @@
-# Virtual Environments and Python Caches
+# Python
 venv/
+.venv/
 __pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Large folders (Models, downloaded repos, etc)
-models/
-corpus/
-supply_chain/
-youtube/
-
-# Datasets and Large Text Files
+# Large binaries — never track these in Git
 *.zip
 *.pdf
+*.tar.gz
+*.bin
+*.pt
+*.safetensors
+*.gguf
+
+# Large data files
 *.log
 *.csv
-*ChatContext*.txt
-*ChatContext*.md
-*ResearchData*.txt
-download*.txt
-temp_*.txt
+data/raw/
+data/dpo/
+data/chat_context/
+data/research/
+
+# Excluded subdirectories (large, downloaded content)
+corpus/
+supply_chain/vllm_wheels/
+youtube/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.key

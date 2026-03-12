@@ -1,4 +1,0 @@
-## Domain-Specific Patches (Auto-Generated from Sprint Analysis)
-
-- **CRITICAL**: Always include a Python verification code block. Every solution MUST contain at least one ```python ... ``` block.
-- **WEAK AREA**: Difficulty 'hard' (25% solve rate). Consider breaking these into smaller sub-problems.
