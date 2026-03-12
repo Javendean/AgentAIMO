@@ -1,0 +1,36 @@
+"""Sampling strategy module for AgentAIMO."""
+
+from dataclasses import dataclass, field
+from typing import List, Tuple
+from src.solver.inference_engine import GenerationConfig
+
+
+@dataclass
+class SamplingConfig:
+    """Configuration for solution sampling strategy."""
+    num_samples: int = 8
+    temperatures: list[float] = field(default_factory=lambda: [0.3, 0.5, 0.7, 0.9])
+    system_prompt_variants: list[str] = field(default_factory=list)
+    few_shot_sets: list[list[Tuple[str, str]]] = field(default_factory=list)
+    max_tokens_per_sample: int = 4096
+
+
+class SamplingStrategy:
+    """Strategy for sampling multiple solutions."""
+
+    def __init__(self, config: SamplingConfig):
+        """Initialize sampling strategy.
+
+        Args:
+            config: Sampling configuration.
+        """
+        self.config = config
+        raise NotImplementedError
+
+    def build_generation_configs(self) -> list[GenerationConfig]:
+        """Build N configs cycling through temperatures, prompts, few-shots.
+
+        Returns:
+            A list of generation configurations.
+        """
+        raise NotImplementedError
