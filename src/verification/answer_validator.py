@@ -145,7 +145,85 @@ class AnswerValidator:
                         pattern=name,
                         confidence=ConfidenceLevel.LEVEL_0_EXACT,
                     )
+
+        # Last-resort: scan final 8 lines for a bare integer.
+        # Ablation finding (Phase 2): the model frequently outputs "65." or
+        # "the answer is 907" in prose rather than using **ANSWER: N** format.
+        # This path recovers those answers with weaker NL_JUDGMENT confidence.
+        # Confidence is explicitly lower so majority-vote with LEVEL_0_EXACT
+        # answers still wins when there's a conflict.
+        tail_result = self._last_resort_extract(solution_text)
+        if tail_result is not None:
+            return ExtractionResult(
+                value=tail_result,
+                raw_match=f"last-resort:{tail_result}",
+                pattern="last_resort",
+                confidence=ConfidenceLevel.NL_JUDGMENT,
+            )
+
         return ExtractionResult(value=None, confidence=ConfidenceLevel.UNVERIFIED)
+
+    # Prose-level answer phrase patterns (most specific first).
+    # These intentionally exclude bare integers so code values don't match.
+    _PROSE_ANSWER_PATTERNS = [
+        # "Answer: 204 minutes."  / "The answer is 907"
+        re.compile(
+            r"(?:^|\s)(?:the final answer is|the answer is|answer:|answer =|"
+            r"so the answer is|therefore the answer is)\s*(\d{1,6})",
+            re.IGNORECASE | re.MULTILINE,
+        ),
+        # "= 65." at end of prose sentence (not inside a code expression)
+        re.compile(
+            r"(?:total|result|value|count|answer|probability)\s*(?:is|=)\s*(\d{1,6})\s*\.",
+            re.IGNORECASE,
+        ),
+    ]
+
+    # Pattern that matches assistantcommentary code blocks (the model's hallucinated format)
+    _CODE_BLOCK_RE = re.compile(
+        r"(?:```(?:python|py)?.*?```|assistantcommentary to=python code.*?)(?=\n\n|\Z)",
+        re.DOTALL | re.IGNORECASE,
+    )
+
+    def _last_resort_extract(self, solution_text: str) -> Optional[int]:
+        """Search prose (with code blocks stripped) for English answer phrases.
+
+        Ablation finding (Phase 2): the model outputs 'Answer: 204 minutes.' in
+        prose, immediately followed by an appended code block containing unrelated
+        integers (t=24, total+=1 etc). Tail-scanning picks up code values.
+
+        Strategy:
+          1. Strip known code block formats (``` and assistantcommentary blocks)
+          2. Search prose-only text for 'the answer is N' / 'Answer: N' phrases
+          3. Return the LAST match (final answer typically overwrites earlier ones)
+
+        Args:
+            solution_text: The full model output, may contain code blocks.
+
+        Returns:
+            Integer if a clean prose answer phrase is found, else None.
+        """
+        # Step 1: strip code blocks from the prose
+        prose = self._CODE_BLOCK_RE.sub("", solution_text)
+
+        # Step 2: scan prose for answer phrases — collect ALL matches,
+        # use the LAST one (model may revise answers mid-solution)
+        found_vals = []
+        for pattern in self._PROSE_ANSWER_PATTERNS:
+            for match in pattern.finditer(prose):
+                try:
+                    val = int(match.group(1))
+                    if AIMO_MIN <= val <= AIMO_MAX:
+                        found_vals.append(val)
+                except (ValueError, IndexError):
+                    continue
+
+        if not found_vals:
+            return None
+
+        # Return the last match (most likely to be after any solution revision)
+        return found_vals[-1]
+
 
     # ------------------------------------------------------------------
     # Validation methods
