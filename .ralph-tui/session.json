@@ -1,132 +1,22 @@
 {
   "version": 1,
-  "sessionId": "7f416d13-286f-4216-b1f6-88f37a1ebd7a",
-  "status": "running",
-  "startedAt": "2026-03-21T23:25:02.978Z",
-  "updatedAt": "2026-03-21T23:36:37.370Z",
-  "currentIteration": 5,
-  "maxIterations": 10,
-  "tasksCompleted": 5,
+  "sessionId": null,
+  "status": "idle",
+  "startedAt": null,
+  "updatedAt": "2026-03-22T00:00:00.000Z",
+  "currentIteration": 0,
+  "maxIterations": 50,
+  "tasksCompleted": 0,
   "isPaused": false,
-  "agentPlugin": "claude",
-  "model": "sonnet",
+  "agentPlugin": null,
+  "model": null,
   "trackerState": {
     "plugin": "json",
-    "prdPath": "./prd.json",
-    "totalTasks": 9,
-    "tasks": [
-      {
-        "id": "P4-A1",
-        "title": "Swap majority vote for AnswerSelector in kaggle_notebook.py",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "P4-A2",
-        "title": "Add prompt reinforcement for top flaw codes in agent/prompts.py",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "P4-C1",
-        "title": "Implement select_two() two-attempt policy in AnswerSelector",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "P4-C2",
-        "title": "Integrate select_two into notebook for 2-attempt submission policy",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "P4-B1",
-        "title": "Run ablation and document extract_rate improvement",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "P4-E1",
-        "title": "Regenerate BASELINE_METRICS.md after Track A changes",
-        "status": "open",
-        "completedInSession": false
-      },
-      {
-        "id": "P4-D1",
-        "title": "[CLAUDE OPUS] Formalize verification budget allocation algorithm",
-        "status": "open",
-        "completedInSession": false
-      },
-      {
-        "id": "P4-D2",
-        "title": "[CLAUDE OPUS] Diagnose why aime_2024_3 and aime_2024_5 have 0 extractions",
-        "status": "open",
-        "completedInSession": false
-      },
-      {
-        "id": "P4-G1",
-        "title": "Clean up Safe-tier root clutter per MOVE_CANDIDATES.md",
-        "status": "open",
-        "completedInSession": false
-      }
-    ]
+    "prdPath": "./prd.json"
   },
-  "iterations": [
-    {
-      "iteration": 1,
-      "status": "completed",
-      "taskId": "P4-A1",
-      "taskTitle": "Swap majority vote for AnswerSelector in kaggle_notebook.py",
-      "taskCompleted": true,
-      "durationMs": 266190,
-      "startedAt": "2026-03-21T23:25:02.995Z",
-      "endedAt": "2026-03-21T23:29:29.185Z"
-    },
-    {
-      "iteration": 2,
-      "status": "completed",
-      "taskId": "P4-A2",
-      "taskTitle": "Add prompt reinforcement for top flaw codes in agent/prompts.py",
-      "taskCompleted": true,
-      "durationMs": 97584,
-      "startedAt": "2026-03-21T23:29:30.198Z",
-      "endedAt": "2026-03-21T23:31:07.782Z"
-    },
-    {
-      "iteration": 3,
-      "status": "completed",
-      "taskId": "P4-C1",
-      "taskTitle": "Implement select_two() two-attempt policy in AnswerSelector",
-      "taskCompleted": true,
-      "durationMs": 97295,
-      "startedAt": "2026-03-21T23:31:08.792Z",
-      "endedAt": "2026-03-21T23:32:46.087Z"
-    },
-    {
-      "iteration": 4,
-      "status": "completed",
-      "taskId": "P4-C2",
-      "taskTitle": "Integrate select_two into notebook for 2-attempt submission policy",
-      "taskCompleted": true,
-      "durationMs": 75499,
-      "startedAt": "2026-03-21T23:32:47.097Z",
-      "endedAt": "2026-03-21T23:34:02.596Z"
-    },
-    {
-      "iteration": 5,
-      "status": "completed",
-      "taskId": "P4-B1",
-      "taskTitle": "Run ablation and document extract_rate improvement",
-      "taskCompleted": true,
-      "durationMs": 152755,
-      "startedAt": "2026-03-21T23:34:03.606Z",
-      "endedAt": "2026-03-21T23:36:36.361Z"
-    }
-  ],
+  "iterations": [],
   "skippedTaskIds": [],
   "cwd": "/home/user/AgentAIMO",
-  "activeTaskIds": [
-    "P4-E1"
-  ],
+  "activeTaskIds": [],
   "subagentPanelVisible": false
 }

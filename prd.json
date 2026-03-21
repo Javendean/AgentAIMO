@@ -1,6 +1,6 @@
 {
   "name": "AgentAIMO Phase 4 — Competition Prep",
-  "description": "AIMO 3 math solver. Deadline April 8 2026. All tests must stay green. Use Claude Sonnet for routine tasks, Opus for complex reasoning (D-tier tasks). Run `npx gitnexus analyze` after every commit. Run tests with `/root/.local/bin/pytest tests/ --tb=short -q`.",
+  "description": "AIMO 3 math solver. Deadline April 8 2026. All tests must stay green. Use Codex (o4-mini) for routine tasks, Claude Code (opus) for complex D-tier reasoning. Run `npx gitnexus analyze` after every commit. Run tests with `python -m pytest tests/ --tb=short -q`.",
   "branchName": "claude/configure-ralphtui-claude-M4WRa",
   "userStories": [
     {
@@ -8,143 +8,144 @@
       "title": "Swap majority vote for AnswerSelector in kaggle_notebook.py",
       "priority": 1,
       "passes": true,
-      "description": "Replace the Counter/majority_vote logic in notebook/kaggle_notebook.py with src/solver/answer_selector.AnswerSelector.select(). Build minimal VerificationReport objects (ConfidenceLevel.NL_JUDGMENT) for each attempt where real reports are unavailable. Read the notebook first before editing. Run gitnexus_impact on any symbol you modify.",
+      "description": "Replace the Counter/majority_vote logic in notebook/kaggle_notebook.py with src/solver/answer_selector.AnswerSelector.select(). Build minimal VerificationReport objects (ConfidenceLevel.NL_JUDGMENT) for each attempt where real reports are unavailable.",
       "acceptanceCriteria": [
         "notebook/kaggle_notebook.py imports and calls AnswerSelector.select()",
         "Counter / majority_vote pattern is removed or replaced",
-        "/root/.local/bin/pytest tests/ --tb=short -q passes with no new failures",
+        "python -m pytest tests/ --tb=short -q passes with no new failures",
         "python scripts/run_baseline.py completes without error"
       ],
-      "notes": "Key files: notebook/kaggle_notebook.py, src/solver/answer_selector.py, src/models/verification.py. The notebook may not have VerificationReport objects — build minimal ones: VerificationReport(passed_checks=1 if answer is not None else 0, confidence=ConfidenceLevel.NL_JUDGMENT). See docs/PHASE4_HANDOFF.md Track A for exact code snippet.",
-      "completionNotes": "Completed by agent"
+      "completionNotes": "Completed by Claude Sonnet session 2026-03-21. Swapped Counter with AnswerSelector in deep_researcher.py and added Cell 7 to notebook."
     },
     {
       "id": "P4-A2",
       "title": "Add prompt reinforcement for top flaw codes in agent/prompts.py",
       "priority": 2,
       "passes": true,
-      "description": "Add 3 instruction phrases to the system/user prompt in agent/prompts.py to address CONTEXT_CONFABULATION, MISSING_FINAL_COMMIT, and CHANNEL_LEAKAGE — the top flaw codes from docs/BASELINE_METRICS.md. Phrases are specified exactly in docs/PHASE4_HANDOFF.md Track A.",
+      "description": "Add 3 instruction phrases to the system/user prompt in agent/prompts.py to address CONTEXT_CONFABULATION, MISSING_FINAL_COMMIT, and CHANNEL_LEAKAGE.",
       "acceptanceCriteria": [
         "agent/prompts.py includes self-contained, no-context-confabulation instruction",
         "agent/prompts.py includes mandatory **ANSWER: N** format instruction",
         "agent/prompts.py includes no-internal-tool-syntax instruction",
         "All tests pass (no new failures)"
       ],
-      "notes": "Exact phrases to add are in docs/PHASE4_HANDOFF.md Track A. Do NOT change the regex or extraction logic here — that is a separate task.",
-      "completionNotes": "Completed by agent"
+      "completionNotes": "Completed by Claude Sonnet session 2026-03-21. Added 3 sections to SYSTEM_PROMPT."
     },
     {
       "id": "P4-C1",
       "title": "Implement select_two() two-attempt policy in AnswerSelector",
       "priority": 3,
       "passes": true,
-      "dependsOn": [
-        "P4-A1"
-      ],
-      "description": "Add select_two() method to src/solver/answer_selector.py per the spec in docs/PHASE4_HANDOFF.md Track C. Returns (best, second_best_disagreeing). Add 2 new tests to tests/test_phase3.py.",
+      "dependsOn": ["P4-A1"],
+      "description": "Add select_two() method to src/solver/answer_selector.py. Returns (best, second_best_disagreeing). 3 tests added to tests/test_phase3.py.",
       "acceptanceCriteria": [
         "AnswerSelector.select_two() is implemented",
         "test_select_two_returns_different_answers passes",
-        "test_select_two_when_unanimous passes (second answer is None when all agree)",
-        "test_select_two_with_all_none_answers passes (graceful when no answers extracted)",
+        "test_select_two_when_unanimous passes",
+        "test_select_two_with_all_none_answers passes",
         "All tests pass"
       ],
-      "notes": "Implementation spec is in docs/PHASE4_HANDOFF.md Track C. The method signature: def select_two(self, annotated_solutions) -> tuple[tuple, tuple]. When all answers are None, return (None, 'no_answer', 0.0) for both slots.",
-      "completionNotes": "Completed by agent"
+      "completionNotes": "Completed by Claude Sonnet session 2026-03-21."
     },
     {
       "id": "P4-C2",
       "title": "Integrate select_two into notebook for 2-attempt submission policy",
       "priority": 4,
       "passes": true,
-      "dependsOn": [
-        "P4-A1",
-        "P4-C1"
-      ],
-      "description": "Update notebook/kaggle_notebook.py to use AnswerSelector.select_two(). Attempt 1 = highest-confidence answer, Attempt 2 = highest-confidence disagreeing answer. If second is None, fall back to same as first.",
+      "dependsOn": ["P4-A1", "P4-C1"],
+      "description": "Update notebook/kaggle_notebook.py Cell 7 to use select_two(). Attempt 1 = highest-confidence, Attempt 2 = highest-confidence disagreeing. Fallback: use first for both.",
       "acceptanceCriteria": [
-        "Notebook calls select_two() instead of select() for final answer submission",
-        "Graceful fallback when second answer is None (use first answer for both attempts)",
+        "Notebook calls select_two() instead of select()",
+        "Graceful fallback when second answer is None",
         "All tests pass"
       ],
-      "completionNotes": "Completed by agent"
+      "completionNotes": "Completed by Claude Sonnet session 2026-03-21."
+    },
+    {
+      "id": "P4-FIX1",
+      "title": "Fix 15 pre-existing test failures in test_verification_battery.py",
+      "priority": 5,
+      "passes": false,
+      "description": "There are 15 pre-existing failures in tests/test_verification_battery.py (arithmetic_checker and symbolic_checker tests). These have been noted since the Sonnet session but never investigated. Fix them — the test suite should be fully green, not 'green with known failures'.",
+      "acceptanceCriteria": [
+        "python -m pytest tests/test_verification_battery.py -v passes with 0 failures",
+        "No tests removed or skipped to achieve this",
+        "All other tests still pass"
+      ],
+      "notes": "Agent: Codex. Read the failing tests first, then read the checker implementations in src/verification/. The failures are likely in arithmetic_checker.py and symbolic_checker.py."
     },
     {
       "id": "P4-B1",
-      "title": "Run ablation and document extract_rate improvement",
-      "priority": 5,
-      "passes": true,
-      "dependsOn": [
-        "P4-A1",
-        "P4-A2"
-      ],
-      "description": "Run `python scripts/ablation_extraction.py` and compare extract_rate on research_data2.jsonl before vs after P4-A2 prompt changes. Write result summary to docs/ABLATION_RESULTS_P4A.md. Target: extract_rate >= 40%.",
+      "title": "Run ablation with real Kaggle traces and document extract_rate",
+      "priority": 6,
+      "passes": false,
+      "dependsOn": ["P4-A1", "P4-A2"],
+      "description": "PREVIOUS ATTEMPT FAILED: Sonnet session marked this done but ablation_extraction.py skipped because raw JSONL files (data/research/research_data*.jsonl) don't exist locally. This task requires a live Kaggle run first OR finding the raw trace files. Investigate whether trace data exists elsewhere in the repo or needs to be regenerated.",
       "acceptanceCriteria": [
-        "docs/ABLATION_RESULTS_P4A.md exists with before/after comparison",
-        "Extract rate result is documented clearly",
-        "If rate < 40%, a diagnostic note is included explaining why"
+        "Ablation script actually runs on real data (not just writing a doc saying 'data missing')",
+        "docs/ABLATION_RESULTS_P4A.md contains real before/after numbers",
+        "Extract rate result is documented clearly"
       ],
-      "completionNotes": "Completed by agent"
+      "notes": "Agent: Codex. Check data/verification/audit_research_data*.jsonl — these exist. If raw traces are truly missing, compute extract rates from audit files as a legitimate fallback, but document what was actually measured vs what requires a Kaggle run."
     },
     {
       "id": "P4-E1",
-      "title": "Regenerate BASELINE_METRICS.md after Track A changes",
-      "priority": 6,
-      "passes": false,
-      "dependsOn": [
-        "P4-A1",
-        "P4-A2"
-      ],
-      "description": "Run `python scripts/run_baseline.py` and overwrite docs/BASELINE_METRICS.md with new results. Target: correct count on research_data.jsonl improves from 3/8 to >= 5/8.",
-      "acceptanceCriteria": [
-        "docs/BASELINE_METRICS.md regenerated with today's date",
-        "Correct count documented clearly",
-        "If correct count < 5/8, a diagnostic note explains why"
-      ]
-    },
-    {
-      "id": "P4-D1",
-      "title": "[CLAUDE OPUS] Formalize verification budget allocation algorithm",
+      "title": "Regenerate BASELINE_METRICS.md with real data",
       "priority": 7,
       "passes": false,
-      "description": "Read docs/evolution.md carefully. The core open problem is: how to optimally allocate finite verification compute budget across N solution traces and M verifiable claims per trace. Formalize this as a stochastic scheduling problem. Solve the warm-up (uniform-cost bandit case) and extend to heterogeneous costs via Lagrangian relaxation or Whittle index. Produce a concrete pseudocode algorithm for src/solver/answer_selector.py. Use extended thinking. Think deeply before writing.",
+      "dependsOn": ["P4-A1", "P4-A2"],
+      "description": "PREVIOUS ATTEMPT INCOMPLETE: Sonnet session updated the date but couldn't run run_baseline.py because raw input files are missing. The 3/8 and 6/8 numbers are stale pre-P4 metrics. Need to either: (a) run a new Kaggle inference to generate fresh traces, or (b) clearly document that the >=5/8 target requires new inference and cannot be verified offline.",
       "acceptanceCriteria": [
-        "docs/VERIFICATION_BUDGET_ALGORITHM.md produced with formal problem statement",
-        "Warm-up (uniform-cost bandit) case solved explicitly",
-        "Full heterogeneous-cost case addressed with concrete algorithm",
-        "Pseudocode is implementable in Python"
+        "docs/BASELINE_METRICS.md regenerated with clear status",
+        "Diagnostic note explains exactly what can vs cannot be measured offline",
+        "If new inference data is available, run run_baseline.py and report real numbers"
       ],
-      "notes": "This task requires Claude Opus with extended thinking. Run with: /home/user/ralph-tui/dist/cli.js run --prd ./prd.json --agent claude --model opus --iterations 1. Read docs/evolution.md and docs/FORWARD_PLAN_v2.md first."
+      "notes": "Agent: Codex. This is blocked on having raw trace data. If the data doesn't exist, the honest answer is to document that and move on to tasks that are actionable."
     },
     {
       "id": "P4-D2",
       "title": "[CLAUDE OPUS] Diagnose why aime_2024_3 and aime_2024_5 have 0 extractions",
       "priority": 8,
       "passes": false,
-      "description": "From BASELINE_METRICS.md: aime_2024_3 (GT=809) and aime_2024_5 (GT=104) have no_answer_extracted with PSEUDO_VERIFICATION flaws. Read raw traces in data/verification/audit_research_data.jsonl for these two problems. Trace the extraction pipeline using gitnexus. Produce docs/EXTRACTION_FAILURE_ANALYSIS.md with root cause and concrete fix.",
+      "description": "From BASELINE_METRICS.md: aime_2024_3 (GT=809) and aime_2024_5 (GT=104) have no_answer_extracted with PSEUDO_VERIFICATION flaws. Read raw traces in data/verification/audit_research_data.jsonl. Root cause: solver never arrives at the correct answer, or extraction strips it? This is a diagnostic task — analyze only, do not implement.",
       "acceptanceCriteria": [
         "docs/EXTRACTION_FAILURE_ANALYSIS.md exists",
-        "Root cause identified: solver never reaches correct answer vs extraction strips it",
+        "Root cause identified: solver failure vs extraction failure",
         "Concrete fix proposed (prompt change, sampler config, or extraction rule change)"
       ],
-      "notes": "Read data/verification/audit_research_data.jsonl first. Use gitnexus_query to trace the extraction pipeline. This is a diagnostic task — do not implement any changes, only analyze and document."
+      "notes": "Agent: Claude Opus. This requires reasoning about traces. Run with: --agent claude --model opus --iterations 1"
+    },
+    {
+      "id": "P4-D1",
+      "title": "[CLAUDE OPUS] Formalize verification budget allocation algorithm",
+      "priority": 9,
+      "passes": false,
+      "description": "Read docs/evolution.md. Core open problem: optimal allocation of finite verification compute across N traces and M claims. Formalize as stochastic scheduling. Solve uniform-cost bandit warmup, extend to heterogeneous costs. Produce pseudocode for src/solver/answer_selector.py.",
+      "acceptanceCriteria": [
+        "docs/VERIFICATION_BUDGET_ALGORITHM.md produced with formal problem statement",
+        "Warm-up (uniform-cost bandit) case solved explicitly",
+        "Full heterogeneous-cost case addressed with concrete algorithm",
+        "Pseudocode is implementable in Python"
+      ],
+      "notes": "Agent: Claude Opus with extended thinking. Run with: --agent claude --model opus --iterations 1"
     },
     {
       "id": "P4-G1",
       "title": "Clean up Safe-tier root clutter per MOVE_CANDIDATES.md",
-      "priority": 9,
+      "priority": 10,
       "passes": false,
-      "description": "Execute only the Safe tier moves from docs/MOVE_CANDIDATES.md — chat logs, .bak files, noise files — to _attic/noise/. Do NOT touch Risky tier. Do NOT remove any Python files, test files, or docs. Run tests after to confirm nothing broke.",
+      "description": "Execute only the Safe tier moves from docs/MOVE_CANDIDATES.md — chat logs, .bak files, noise files to _attic/noise/. Do NOT touch Risky tier or any Python/test/doc files.",
       "acceptanceCriteria": [
-        "Safe-tier files moved to _attic/noise/ as specified in MOVE_CANDIDATES.md",
+        "Safe-tier files moved to _attic/noise/",
         "All tests pass (no new failures)",
         "No Python source files moved or deleted"
-      ]
+      ],
+      "notes": "Agent: Codex. Low priority — only do this when all actionable tasks above are complete."
     }
   ],
   "metadata": {
     "createdAt": "2026-03-21",
-    "version": "4.0",
-    "updatedAt": "2026-03-21T23:36:37.370Z"
+    "version": "5.0",
+    "updatedAt": "2026-03-22"
   }
 }

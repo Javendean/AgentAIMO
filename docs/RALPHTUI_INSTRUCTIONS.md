@@ -1,6 +1,6 @@
 # RalphTUI Operating Instructions — AgentAIMO
 
-**Written:** 2026-03-21
+**Written:** 2026-03-21 | **Updated:** 2026-03-22 (config review + Claude Code reconfiguration)
 **Purpose:** Operational guide for RalphTUI to run continuous research and codebase evolution for AIMO 3.
 **Audience:** RalphTUI agent loop (read automatically at session start)
 
@@ -119,18 +119,18 @@ After completing any task:
 
 ## 5. Per-Task Agent Selection Reference
 
-| Task ID | Agent | Model | Reasoning |
-|---------|-------|-------|-----------|
-| P4-A1 | Codex | o4-mini | Clear spec: swap Counter for AnswerSelector. Mechanical. |
-| P4-A2 | Codex | o4-mini | Clear spec: add 3 prompt phrases. Copy from PHASE4_HANDOFF.md. |
-| P4-B1 | Codex | o4-mini | Run a script, write a doc. No reasoning required. |
-| P4-C1 | Codex | o4-mini | Implement select_two() — spec is in PHASE4_HANDOFF.md Track C. |
-| P4-C2 | Codex | o4-mini | Wire select_two into notebook. Mechanical integration. |
-| P4-D1 | Claude | opus | Open math problem: budget-aware scheduling formalization. Requires extended thinking. |
-| P4-D2 | Claude | opus | Unknown root cause diagnosis. Requires tracing + reasoning. |
-| P4-E1 | Codex | o4-mini | Run a script, update a file. |
-| P4-F1 | Claude | sonnet | Implement non-trivial stubs with mathematical precision needed. |
-| P4-G1 | Codex | o4-mini | Safe file moves. No reasoning. |
+| Task ID | Agent | Model | Status | Reasoning |
+|---------|-------|-------|--------|-----------|
+| P4-A1 | ~~Codex~~ | ~~o4-mini~~ | **DONE** | Completed 2026-03-21 (Sonnet session). |
+| P4-A2 | ~~Codex~~ | ~~o4-mini~~ | **DONE** | Completed 2026-03-21 (Sonnet session). |
+| P4-C1 | ~~Codex~~ | ~~o4-mini~~ | **DONE** | Completed 2026-03-21 (Sonnet session). |
+| P4-C2 | ~~Codex~~ | ~~o4-mini~~ | **DONE** | Completed 2026-03-21 (Sonnet session). |
+| P4-FIX1 | Codex | o4-mini | **OPEN** | Fix 15 pre-existing test failures. Mechanical debugging. |
+| P4-B1 | Codex | o4-mini | **REDO** | Previous run couldn't execute — raw data missing. Needs real data or audit-file fallback. |
+| P4-E1 | Codex | o4-mini | **REDO** | Same data-missing issue. Document what's measurable offline. |
+| P4-D2 | Claude | opus | **OPEN** | Unknown root cause diagnosis on 0-extraction problems. Requires trace reasoning. |
+| P4-D1 | Claude | opus | **OPEN** | Open math problem: budget-aware scheduling formalization. Requires extended thinking. |
+| P4-G1 | Codex | o4-mini | **OPEN** | Safe file moves. No reasoning. Lowest priority. |
 
 ---
 
@@ -278,7 +278,24 @@ prd.json                             ← Task list for RalphTUI
 
 ---
 
-## 12. RalphTUI CLI Quick Reference
+## 12. Notifications & Telegram Bridge
+
+RalphTUI fires system notifications on:
+- Loop end (all tasks complete or max iterations reached)
+- Errors (when `pauseOnError = true` triggers)
+- Task completion
+
+These notifications are picked up by the Telegram bridge configured locally.
+The `[notifications]` section in `.ralph-tui/config.toml` must have `enabled = true`.
+
+**If notifications stop working:**
+1. Check `enabled = true` in `.ralph-tui/config.toml` under `[notifications]`
+2. Verify the local Telegram bridge daemon is running
+3. Check `sound = "system"` is set (some bridges require system-level notifications)
+
+---
+
+## 13. RalphTUI CLI Quick Reference
 
 ```bash
 # Install (one-time, already done)
@@ -309,16 +326,17 @@ cd /home/user/AgentAIMO
 
 ---
 
-## 13. Success Metrics (what "done" looks like for Phase 4)
+## 14. Success Metrics (what "done" looks like for Phase 4)
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Tests passing | 159/159 | ≥159/159 (never regress) |
-| research_data.jsonl correct | 3/8 = 38% | ≥5/8 = 63% |
-| research_data2.jsonl extract rate | 21.1% | ≥40% |
-| MISSING_FINAL_COMMIT rate | 38% | <15% |
-| CONTEXT_CONFABULATION rate | 90% | <30% |
-| Notebook uses AnswerSelector | No | Yes |
-| select_two() implemented | No | Yes |
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+| Tests passing | 159/159 (15 failing in verification battery) | All green | P4-FIX1 |
+| research_data.jsonl correct | 3/8 = 38% | ≥5/8 = 63% | Needs Kaggle run |
+| research_data2.jsonl extract rate | 21.1% (pre-P4) | ≥40% | Needs Kaggle run |
+| MISSING_FINAL_COMMIT rate | 38% | <15% | P4-A2 done, needs validation |
+| CONTEXT_CONFABULATION rate | 90% | <30% | P4-A2 done, needs validation |
+| Notebook uses AnswerSelector | Yes | Yes | **P4-A1 DONE** |
+| select_two() implemented | Yes | Yes | **P4-C1 DONE** |
+| Notebook uses select_two() | Yes | Yes | **P4-C2 DONE** |
 
 When all targets are met: submit the improved notebook to Kaggle and record the public score.

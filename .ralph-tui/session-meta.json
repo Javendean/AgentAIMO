@@ -1,14 +1,14 @@
 {
-  "id": "7f416d13-286f-4216-b1f6-88f37a1ebd7a",
-  "status": "running",
-  "startedAt": "2026-03-21T23:25:02.705Z",
-  "updatedAt": "2026-03-21T23:36:36.366Z",
-  "agentPlugin": "claude",
+  "id": null,
+  "status": "idle",
+  "startedAt": null,
+  "updatedAt": "2026-03-22T00:00:00.000Z",
+  "agentPlugin": null,
   "trackerPlugin": "json",
   "prdPath": "./prd.json",
-  "currentIteration": 5,
-  "maxIterations": 10,
+  "currentIteration": 0,
+  "maxIterations": 50,
   "totalTasks": 0,
-  "tasksCompleted": 5,
+  "tasksCompleted": 0,
   "cwd": "/home/user/AgentAIMO"
 }

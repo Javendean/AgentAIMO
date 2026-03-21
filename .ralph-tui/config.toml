@@ -3,8 +3,9 @@ configVersion = "2.1"
 # =============================================================================
 # AgentAIMO — RalphTUI Configuration
 # Project: AIMO 3 competition math solver | Deadline: April 8, 2026
-# Auth: Codex uses local ChatGPT OAuth handshake (codex login — no API key)
-#       Claude uses Claude Code's own local OAuth session
+# Strategy: Codex for routine tasks, Claude Code (opus) for complex reasoning
+# Auth: Codex → local ChatGPT OAuth (codex login)
+#       Claude → Claude Code local OAuth session
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -18,7 +19,8 @@ agent = "codex"
 # AGENTS
 # ---------------------------------------------------------------------------
 
-# Codex — default workhorse, local handshake auth (no OPENAI_API_KEY needed)
+# Codex — default workhorse for routine implementation tasks
+# Use for: stub implementations, script runs, test writing, refactors, file cleanup
 [[agents]]
 name = "codex"
 plugin = "codex"
@@ -31,17 +33,20 @@ timeout = 600000          # 10 minutes per task
   fullAuto = true
   sandbox = "workspace-write"
 
-# Claude Code — fallback for complex D-tier tasks, uses local Claude Code OAuth
+# Claude Code — reserved for complex research, architecture, and D-tier tasks
+# Use for: open math problems, unknown root causes, algorithm design, critical reviews
+# RalphTUI invokes: /home/user/ralph-tui/dist/cli.js run --agent claude --model opus
 [[agents]]
 name = "claude"
 plugin = "claude"
 default = false
 command = "claude"
-timeout = 900000
+timeout = 900000          # 15 minutes — Claude tasks are deeper
 
   [agents.options]
-  model = "sonnet"        # default; override with --model opus for D-tier tasks
+  model = "opus"          # Always opus for Claude tasks — extended thinking enabled
   printMode = "text"
+  dangerouslySkipPermissions = true
 
 # ---------------------------------------------------------------------------
 # SUBAGENT TRACING
@@ -49,17 +54,26 @@ timeout = 900000
 subagentTracingDetail = "full"
 
 # ---------------------------------------------------------------------------
-# TRACKER
+# TRACKER: PRD JSON (tasks defined in prd.json at project root)
 # ---------------------------------------------------------------------------
 tracker = "json"
+
+# ---------------------------------------------------------------------------
+# NOTIFICATIONS — keep Telegram bridge updates flowing
+# System notifications fire on: loop end, max iterations, errors, task completion
+# The Telegram bridge picks these up from the local notification daemon.
+# ---------------------------------------------------------------------------
+[notifications]
+enabled = true
+sound = "system"
 
 # ---------------------------------------------------------------------------
 # GLOBAL RUNTIME SETTINGS
 # ---------------------------------------------------------------------------
 [options]
-maxIterations = 50
-pauseOnError = true
-confirmBeforeStart = false
+maxIterations = 50        # Hard stop — prevent runaway loops
+pauseOnError = true       # Always pause on error so human can inspect
+confirmBeforeStart = true # Require human confirmation before each run
 saveLogsPerIteration = true
 resumeOnCrash = true
 
@@ -69,16 +83,17 @@ resumeOnCrash = true
 [context]
 projectName = "AgentAIMO"
 deadline = "April 8 2026"
-testCommand = "/root/.local/bin/pytest tests/ --tb=short -q"
+testCommand = "python -m pytest tests/ --tb=short -q"
 currentPhase = "Phase 4"
 codeRules = """
 CRITICAL RULES (never violate):
-- All new code goes in src/ — fill existing stubs, no parallel implementations
-- Every new module needs >=3 passing tests before commit
-- Never remove an existing test; never use try/except pass
-- ConfidenceLevel: LEVEL_0_EXACT > LEVEL_1_SYMBOLIC > ENUMERATED > NL_JUDGMENT > UNVERIFIED
+- All new code goes in src/ — fill existing stubs, never create parallel implementations
+- Tests go in tests/ — every new module needs >=3 passing tests before commit
+- Never remove an existing test; never suppress errors with try/except pass
+- ConfidenceLevel hierarchy: LEVEL_0_EXACT > LEVEL_1_SYMBOLIC > ENUMERATED > NL_JUDGMENT > UNVERIFIED
 - No live model API calls in tests or offline modules
 - pipeline.run() takes SolutionTrace(raw_text=sol_text) — NOT a raw string
-- Run npx gitnexus analyze after every commit
+- Run npx gitnexus analyze after every commit to keep the code graph fresh
+- Run gitnexus_impact before modifying any symbol
 - Never edit the Kaggle notebook without reading it first
 """
