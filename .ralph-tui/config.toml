@@ -1,1 +1,84 @@
 configVersion = "2.1"
+
+# =============================================================================
+# AgentAIMO — RalphTUI Configuration
+# Project: AIMO 3 competition math solver | Deadline: April 8, 2026
+# Auth: Codex uses local ChatGPT OAuth handshake (codex login — no API key)
+#       Claude uses Claude Code's own local OAuth session
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# DEFAULT AGENT: Codex — authenticated via local ChatGPT OAuth handshake
+# Run `codex login` once on the host machine to store credentials locally.
+# RalphTUI invokes Codex using those local credentials — no API key required.
+# ---------------------------------------------------------------------------
+agent = "codex"
+
+# ---------------------------------------------------------------------------
+# AGENTS
+# ---------------------------------------------------------------------------
+
+# Codex — default workhorse, local handshake auth (no OPENAI_API_KEY needed)
+[[agents]]
+name = "codex"
+plugin = "codex"
+default = true
+command = "codex"
+timeout = 600000          # 10 minutes per task
+
+  [agents.options]
+  model = "o4-mini"       # lightweight, fast for routine tasks
+  fullAuto = true
+  sandbox = "workspace-write"
+
+# Claude Code — fallback for complex D-tier tasks, uses local Claude Code OAuth
+[[agents]]
+name = "claude"
+plugin = "claude"
+default = false
+command = "claude"
+timeout = 900000
+
+  [agents.options]
+  model = "sonnet"        # default; override with --model opus for D-tier tasks
+  printMode = "text"
+
+# ---------------------------------------------------------------------------
+# SUBAGENT TRACING
+# ---------------------------------------------------------------------------
+subagentTracingDetail = "full"
+
+# ---------------------------------------------------------------------------
+# TRACKER
+# ---------------------------------------------------------------------------
+tracker = "json"
+
+# ---------------------------------------------------------------------------
+# GLOBAL RUNTIME SETTINGS
+# ---------------------------------------------------------------------------
+[options]
+maxIterations = 50
+pauseOnError = true
+confirmBeforeStart = false
+saveLogsPerIteration = true
+resumeOnCrash = true
+
+# ---------------------------------------------------------------------------
+# PROMPT CONTEXT — injected into every agent prompt
+# ---------------------------------------------------------------------------
+[context]
+projectName = "AgentAIMO"
+deadline = "April 8 2026"
+testCommand = "/root/.local/bin/pytest tests/ --tb=short -q"
+currentPhase = "Phase 4"
+codeRules = """
+CRITICAL RULES (never violate):
+- All new code goes in src/ — fill existing stubs, no parallel implementations
+- Every new module needs >=3 passing tests before commit
+- Never remove an existing test; never use try/except pass
+- ConfidenceLevel: LEVEL_0_EXACT > LEVEL_1_SYMBOLIC > ENUMERATED > NL_JUDGMENT > UNVERIFIED
+- No live model API calls in tests or offline modules
+- pipeline.run() takes SolutionTrace(raw_text=sol_text) — NOT a raw string
+- Run npx gitnexus analyze after every commit
+- Never edit the Kaggle notebook without reading it first
+"""
