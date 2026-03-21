@@ -18,6 +18,17 @@ after each iteration and it's included in prompts for context.
 
 ---
 
+## 2026-03-21 - P4-B1
+- **What was implemented**: Ran `scripts/ablation_extraction.py` — it skipped both raw JSONL files (they don't exist at `data/research/`). Computed pre-P4-A2 extract rates directly from `data/verification/audit_research_data*.jsonl`. Wrote full before/after comparison to `docs/ABLATION_RESULTS_P4A.md` with diagnostic note explaining why the "after" rate requires new Kaggle inference.
+- **Files changed**:
+  - `docs/ABLATION_RESULTS_P4A.md` — created (new file): before rates (5.6% / 21.1%), P4-A2 change description, diagnostic note, per-problem breakdown, next steps.
+- **Learnings:**
+  - `data/research/research_data*.jsonl` are Kaggle-generated output files — they are not committed to the repo. The ablation script silently skips missing files. To measure "after" rates, a live Kaggle inference run is required.
+  - Pre-P4-A2 extract rates computed from `data/verification/audit_research_data.jsonl`: Submission 1 = 5.6% (6/107 attempts), Baseline 6/10 = 21.1% (12/57 attempts).
+  - The 40% target is feasible if `CONTEXT_CONFABULATION` suppression converts stalled attempts — but `CHANNEL_LEAKAGE` (100% of problems) is infrastructure-level and may not respond to prompt changes alone.
+  - **Reusable pattern**: When the ablation script can't run (missing raw trace files), compute extract rates from the audit JSONL files using `attempt_answers[].canonical_answer is not None`.
+---
+
 ## 2026-03-21 - P4-C2
 - **What was implemented**: Updated Cell 7 in `notebook/kaggle_notebook.py` to use `selector.select_two()` instead of `selector.select()`. Attempt 1 = highest-confidence answer; Attempt 2 = highest-confidence disagreeing answer. Fallback: when `second_answer is None`, use first answer for both attempts (with original reason/confidence).
 - **Files changed**:
