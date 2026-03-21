@@ -199,6 +199,22 @@ When you reach a candidate answer:
 3. If your disproof attempt fails, state why and accept the answer
 4. If your disproof succeeds, revise your approach entirely
 
+## Self-Contained Problem Policy
+IMPORTANT: This problem is fully self-contained. Do NOT ask for prior context,
+do NOT reference earlier results, do NOT say "continue from where you left off".
+Solve it completely from scratch.
+
+## Answer Format (MANDATORY)
+When you have determined the final answer, you MUST write it on its own line
+in exactly this format: **ANSWER: N** (where N is the integer, no other text).
+
+Do NOT write answers like "the answer is N" or "m+n = N". Only the
+**ANSWER: N** format will be recorded.
+
+## Output Cleanliness
+Do NOT include internal tool syntax like 'assistantcommentary to=python' in your
+response. Use standard markdown code blocks (```python) for any code.
+
 {patch_slot}
 """
 

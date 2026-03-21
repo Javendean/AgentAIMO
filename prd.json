@@ -7,7 +7,7 @@
       "id": "P4-A1",
       "title": "Swap majority vote for AnswerSelector in kaggle_notebook.py",
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "description": "Replace the Counter/majority_vote logic in notebook/kaggle_notebook.py with src/solver/answer_selector.AnswerSelector.select(). Build minimal VerificationReport objects (ConfidenceLevel.NL_JUDGMENT) for each attempt where real reports are unavailable. Read the notebook first before editing. Run gitnexus_impact on any symbol you modify.",
       "acceptanceCriteria": [
         "notebook/kaggle_notebook.py imports and calls AnswerSelector.select()",
@@ -15,7 +15,8 @@
         "/root/.local/bin/pytest tests/ --tb=short -q passes with no new failures",
         "python scripts/run_baseline.py completes without error"
       ],
-      "notes": "Key files: notebook/kaggle_notebook.py, src/solver/answer_selector.py, src/models/verification.py. The notebook may not have VerificationReport objects — build minimal ones: VerificationReport(passed_checks=1 if answer is not None else 0, confidence=ConfidenceLevel.NL_JUDGMENT). See docs/PHASE4_HANDOFF.md Track A for exact code snippet."
+      "notes": "Key files: notebook/kaggle_notebook.py, src/solver/answer_selector.py, src/models/verification.py. The notebook may not have VerificationReport objects — build minimal ones: VerificationReport(passed_checks=1 if answer is not None else 0, confidence=ConfidenceLevel.NL_JUDGMENT). See docs/PHASE4_HANDOFF.md Track A for exact code snippet.",
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "P4-A2",
@@ -140,6 +141,6 @@
   "metadata": {
     "createdAt": "2026-03-21",
     "version": "4.0",
-    "updatedAt": "2026-03-21T23:25:02.997Z"
+    "updatedAt": "2026-03-21T23:29:30.199Z"
   }
 }

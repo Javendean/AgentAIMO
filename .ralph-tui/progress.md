@@ -18,6 +18,22 @@ after each iteration and it's included in prompts for context.
 
 ---
 
+## 2026-03-21 - P4-A2
+
+- **What was implemented**: Added 3 instruction sections to `SYSTEM_PROMPT` in `agent/prompts.py` to address the top flaw codes from `BASELINE_METRICS.md`: `CONTEXT_CONFABULATION`, `MISSING_FINAL_COMMIT`, and `CHANNEL_LEAKAGE`.
+
+- **Files changed**:
+  - `agent/prompts.py` — added 3 new sections before `{patch_slot}`:
+    - `## Self-Contained Problem Policy` — addresses `CONTEXT_CONFABULATION` (do not ask for prior context, solve from scratch)
+    - `## Answer Format (MANDATORY)` — strengthens `MISSING_FINAL_COMMIT` (must use `**ANSWER: N**`, no prose variants)
+    - `## Output Cleanliness` — addresses `CHANNEL_LEAKAGE` (no internal tool syntax like `assistantcommentary to=python`)
+
+- **Learnings**:
+  - SYSTEM_PROMPT already had step 7 "State your final answer clearly" but it was buried in a numbered list and not strongly worded. The new `## Answer Format (MANDATORY)` section is more prominent and explicit.
+  - The 15 pre-existing failures in `test_verification_battery.py` remain unchanged — not caused by this task.
+
+---
+
 ## 2026-03-21 - P4-A1
 
 - **What was implemented**: Swapped Counter/majority_vote with `AnswerSelector.select()` in the
