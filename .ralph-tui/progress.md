@@ -18,6 +18,16 @@ after each iteration and it's included in prompts for context.
 
 ---
 
+## 2026-03-21 - P4-C1
+- **What was implemented**: Added `select_two()` method to `AnswerSelector` per PHASE4_HANDOFF.md Track C. Returns `(best, second_best_disagreeing)` as two `(answer, reason, confidence)` tuples. Added 3 new tests.
+- **Files changed**:
+  - `src/solver/answer_selector.py` — added `select_two()` between `select()` and `_majority_vote()`
+  - `tests/test_phase3.py` — added `test_select_two_returns_different_answers`, `test_select_two_when_unanimous`, `test_select_two_with_all_none_answers`
+- **Learnings:**
+  - `select()` returns `"no_answer_extracted"` (not `"no_answer"`) when no answers are found — test must use `"no_answer" in first[1]` or match the exact string
+  - Tests must be run with `PYTHONPATH=/home/user/AgentAIMO` since there's no package install; `pytest` itself is at `/root/.local/bin/pytest`
+---
+
 ## 2026-03-21 - P4-A2
 
 - **What was implemented**: Added 3 instruction sections to `SYSTEM_PROMPT` in `agent/prompts.py` to address the top flaw codes from `BASELINE_METRICS.md`: `CONTEXT_CONFABULATION`, `MISSING_FINAL_COMMIT`, and `CHANNEL_LEAKAGE`.

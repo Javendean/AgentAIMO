@@ -22,7 +22,7 @@
       "id": "P4-A2",
       "title": "Add prompt reinforcement for top flaw codes in agent/prompts.py",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "description": "Add 3 instruction phrases to the system/user prompt in agent/prompts.py to address CONTEXT_CONFABULATION, MISSING_FINAL_COMMIT, and CHANNEL_LEAKAGE — the top flaw codes from docs/BASELINE_METRICS.md. Phrases are specified exactly in docs/PHASE4_HANDOFF.md Track A.",
       "acceptanceCriteria": [
         "agent/prompts.py includes self-contained, no-context-confabulation instruction",
@@ -30,7 +30,8 @@
         "agent/prompts.py includes no-internal-tool-syntax instruction",
         "All tests pass (no new failures)"
       ],
-      "notes": "Exact phrases to add are in docs/PHASE4_HANDOFF.md Track A. Do NOT change the regex or extraction logic here — that is a separate task."
+      "notes": "Exact phrases to add are in docs/PHASE4_HANDOFF.md Track A. Do NOT change the regex or extraction logic here — that is a separate task.",
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "P4-C1",
@@ -141,6 +142,6 @@
   "metadata": {
     "createdAt": "2026-03-21",
     "version": "4.0",
-    "updatedAt": "2026-03-21T23:29:30.199Z"
+    "updatedAt": "2026-03-21T23:31:08.792Z"
   }
 }

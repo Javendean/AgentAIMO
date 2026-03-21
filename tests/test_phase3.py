@@ -121,6 +121,34 @@ class TestAnswerSelector:
         winner, count, total = self.sel._majority_vote(sols)
         assert winner is None
 
+    def test_select_two_returns_different_answers(self):
+        """Best and second-best should be different integers."""
+        sols = [
+            _sol(42, ConfidenceLevel.LEVEL_0_EXACT),
+            _sol(99, ConfidenceLevel.NL_JUDGMENT),
+            _sol(99, ConfidenceLevel.NL_JUDGMENT),
+        ]
+        first, second = self.sel.select_two(sols)
+        assert first[0] == 42
+        assert second[0] == 99
+        assert first[0] != second[0]
+
+    def test_select_two_when_unanimous(self):
+        """When all answers agree, second slot should be None."""
+        sols = [_sol(7, ConfidenceLevel.LEVEL_0_EXACT)] * 3
+        first, second = self.sel.select_two(sols)
+        assert first[0] == 7
+        assert second[0] is None
+        assert second[1] == "no_disagreement"
+
+    def test_select_two_with_all_none_answers(self):
+        """When no answers are extracted, both slots return None."""
+        sols = [_sol(None, ConfidenceLevel.UNVERIFIED)] * 3
+        first, second = self.sel.select_two(sols)
+        assert first[0] is None
+        assert second[0] is None
+        assert "no_answer" in first[1]
+
     def test_enumerated_confidence_beats_nl(self):
         sols = [
             _sol(191, ConfidenceLevel.ENUMERATED),

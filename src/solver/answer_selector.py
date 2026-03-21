@@ -136,6 +136,31 @@ class AnswerSelector:
         winner, count = counts.most_common(1)[0]
         return winner, count, len(solutions)
 
+    def select_two(
+        self,
+        annotated_solutions: list[AnnotatedSolution],
+    ) -> tuple[tuple[Optional[int], str, float], tuple[Optional[int], str, float]]:
+        """Return (best, second_best_disagreeing) for the AIMO3 two-attempt policy.
+
+        Attempt 1: highest-confidence answer (via select()).
+        Attempt 2: highest-confidence answer that *disagrees* with attempt 1.
+        If no disagreeing answer exists, second slot is (None, "no_disagreement", 0.0).
+        If no answers extracted at all, both slots are (None, "no_answer", 0.0).
+        """
+        first = self.select(annotated_solutions)
+        if first[0] is None:
+            return first, (None, "no_answer", 0.0)
+
+        disagreeing = [
+            s for s in annotated_solutions
+            if s.final_answer is not None and s.final_answer != first[0]
+        ]
+        if not disagreeing:
+            return first, (None, "no_disagreement", 0.0)
+
+        second = self.select(disagreeing)
+        return first, second
+
     def _weighted_vote(
         self,
         solutions: list[AnnotatedSolution],
