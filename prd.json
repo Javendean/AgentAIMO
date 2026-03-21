@@ -1,0 +1,161 @@
+{
+  "project": "AgentAIMO Phase 4 — Competition Prep",
+  "description": "AIMO 3 math solver. Deadline April 8 2026. 159/159 tests must stay green. Use Codex for implementation tasks, Claude for complex reasoning.",
+  "version": "4.0",
+  "tasks": [
+    {
+      "id": "P4-A1",
+      "title": "Swap majority vote for AnswerSelector in kaggle_notebook.py",
+      "priority": 1,
+      "status": "open",
+      "agent": "codex",
+      "description": "Replace the Counter/majority_vote logic in notebook/kaggle_notebook.py with src/solver/answer_selector.AnswerSelector.select(). Build minimal VerificationReport objects (ConfidenceLevel.NL_JUDGMENT) for each attempt where real reports are unavailable. Must not break any existing tests.",
+      "acceptanceCriteria": [
+        "notebook/kaggle_notebook.py imports and calls AnswerSelector.select()",
+        "Counter / majority_vote pattern is removed",
+        "python -m pytest tests/ -q still passes 159/159",
+        "python scripts/run_baseline.py completes without error"
+      ],
+      "files": [
+        "notebook/kaggle_notebook.py",
+        "src/solver/answer_selector.py",
+        "src/models/verification.py"
+      ]
+    },
+    {
+      "id": "P4-A2",
+      "title": "Add prompt reinforcement for CONTEXT_CONFABULATION + MISSING_FINAL_COMMIT",
+      "priority": 2,
+      "status": "open",
+      "agent": "codex",
+      "description": "Add 3 phrases to agent/prompts.py system/user prompt to address top flaw codes. Phrases from PHASE4_HANDOFF.md Track A. Must not break existing tests. Re-run ablation after: python scripts/ablation_extraction.py",
+      "acceptanceCriteria": [
+        "agent/prompts.py includes self-contained, no-context-confabulation instruction",
+        "agent/prompts.py includes mandatory **ANSWER: N** format instruction",
+        "agent/prompts.py includes no-internal-tool-syntax instruction",
+        "All 159 tests still pass"
+      ],
+      "files": ["agent/prompts.py"]
+    },
+    {
+      "id": "P4-B1",
+      "title": "Verify ablation: extract_rate improves from 21% to ≥40%",
+      "priority": 3,
+      "status": "open",
+      "agent": "codex",
+      "description": "Run python scripts/ablation_extraction.py and compare extract_rate on research_data2.jsonl before vs after P4-A2. Write result summary to docs/ABLATION_RESULTS_P4A.md. If rate < 40%, diagnose why and open a new task.",
+      "dependsOn": ["P4-A1", "P4-A2"],
+      "acceptanceCriteria": [
+        "docs/ABLATION_RESULTS_P4A.md exists with before/after comparison",
+        "extract_rate ≥ 40% on research_data2.jsonl OR new diagnostic task created"
+      ],
+      "files": ["scripts/ablation_extraction.py", "docs/ABLATION_RESULTS_P4A.md"]
+    },
+    {
+      "id": "P4-C1",
+      "title": "Implement select_two() two-attempt policy in AnswerSelector",
+      "priority": 4,
+      "status": "open",
+      "agent": "codex",
+      "description": "Add select_two() to src/solver/answer_selector.py per the spec in PHASE4_HANDOFF.md Track C. Returns (best, second_best_disagreeing). Add tests: test_select_two_returns_different_answers, test_select_two_when_unanimous.",
+      "acceptanceCriteria": [
+        "AnswerSelector.select_two() implemented",
+        "test_select_two_returns_different_answers passes",
+        "test_select_two_when_unanimous passes (second is None)",
+        "All 159+ tests pass"
+      ],
+      "files": ["src/solver/answer_selector.py", "tests/test_phase3.py"]
+    },
+    {
+      "id": "P4-C2",
+      "title": "Integrate select_two into notebook for 2-attempt submission policy",
+      "priority": 5,
+      "status": "open",
+      "agent": "codex",
+      "description": "Update notebook/kaggle_notebook.py to use AnswerSelector.select_two(). Attempt 1 = highest-confidence answer, Attempt 2 = highest-confidence disagreeing answer. Must be safe — if select_two returns None for second, fall back to same as first.",
+      "dependsOn": ["P4-A1", "P4-C1"],
+      "acceptanceCriteria": [
+        "Notebook uses select_two for submission",
+        "Graceful fallback when second is None",
+        "All tests pass"
+      ],
+      "files": ["notebook/kaggle_notebook.py"]
+    },
+    {
+      "id": "P4-D1",
+      "title": "[CLAUDE] Formalize verification budget allocation as optimization problem",
+      "priority": 6,
+      "status": "open",
+      "agent": "claude",
+      "model": "opus",
+      "description": "The evolution.md identifies the core open problem: how to optimally allocate a finite verification compute budget across N solution traces and M verifiable claims. Formalize this as a stochastic scheduling problem. Produce a concrete algorithm (pseudocode) for src/solver/answer_selector.py that implements budget-aware verification allocation. The warm-up is the multi-armed bandit case (uniform costs). The full problem requires Lagrangian relaxation or Whittle index. Think step-by-step with extended thinking enabled.",
+      "acceptanceCriteria": [
+        "docs/VERIFICATION_BUDGET_ALGORITHM.md produced with formal problem statement + pseudocode",
+        "Algorithm is implementable in Python within answer_selector.py",
+        "Warm-up (bandit) case is solved explicitly",
+        "Full heterogeneous-cost case is addressed"
+      ],
+      "files": ["docs/VERIFICATION_BUDGET_ALGORITHM.md", "src/solver/answer_selector.py"]
+    },
+    {
+      "id": "P4-D2",
+      "title": "[CLAUDE] Review BASELINE_METRICS and diagnose why aime_2024_3 / aime_2024_5 have 0 extractions",
+      "priority": 7,
+      "status": "open",
+      "agent": "claude",
+      "model": "opus",
+      "description": "From BASELINE_METRICS.md: aime_2024_3 (GT=809) and aime_2024_5 (GT=104) have no_answer_extracted with PSEUDO_VERIFICATION flaws. These are solver quality failures. Read the raw traces in data/verification/audit_research_data.jsonl for these problems. Use gitnexus to trace the full extraction pipeline. Produce a diagnostic in docs/EXTRACTION_FAILURE_ANALYSIS.md with root cause and a concrete fix proposal.",
+      "acceptanceCriteria": [
+        "docs/EXTRACTION_FAILURE_ANALYSIS.md exists",
+        "Root cause identified (solver never reaches correct answer vs. extraction strips it)",
+        "Concrete fix proposed (prompt change, sampler config, or extraction rule)"
+      ],
+      "files": ["data/verification/audit_research_data.jsonl", "agent/prompts.py", "src/verification/answer_validator.py"]
+    },
+    {
+      "id": "P4-E1",
+      "title": "Run run_baseline.py after all Track A changes and update BASELINE_METRICS.md",
+      "priority": 8,
+      "status": "open",
+      "agent": "codex",
+      "description": "Run python scripts/run_baseline.py and overwrite docs/BASELINE_METRICS.md with new results. Target: correct count on research_data.jsonl improves from 3/8 to ≥5/8.",
+      "dependsOn": ["P4-A1", "P4-A2"],
+      "acceptanceCriteria": [
+        "docs/BASELINE_METRICS.md regenerated with 2026-03-21 or later date",
+        "Correct count ≥ 5/8 on research_data.jsonl OR diagnostic task created"
+      ],
+      "files": ["docs/BASELINE_METRICS.md", "scripts/run_baseline.py"]
+    },
+    {
+      "id": "P4-F1",
+      "title": "[CLAUDE] Implement inference_engine.py stub — multi-temperature diverse sampling",
+      "priority": 9,
+      "status": "open",
+      "agent": "claude",
+      "model": "sonnet",
+      "description": "src/solver/inference_engine.py and src/solver/sampling_strategy.py are stubs. Implement the core of inference_engine to support multi-temperature sampling (SamplingConfig). This is Track D from PHASE4_HANDOFF. Only start after P4-A1 through P4-C2 are complete. Read the existing stubs first. Use gitnexus_impact before editing.",
+      "dependsOn": ["P4-C2"],
+      "acceptanceCriteria": [
+        "inference_engine.py no longer raises NotImplementedError for core methods",
+        "sampling_strategy.py SamplingConfig implemented",
+        "≥3 new tests added to tests/ for the new functionality",
+        "All tests pass"
+      ],
+      "files": ["src/solver/inference_engine.py", "src/solver/sampling_strategy.py"]
+    },
+    {
+      "id": "P4-G1",
+      "title": "Clean up root-level clutter per MOVE_CANDIDATES.md Safe tier",
+      "priority": 10,
+      "status": "open",
+      "agent": "codex",
+      "description": "Execute only the Safe tier moves from docs/MOVE_CANDIDATES.md — chat logs, .bak files, noise — to _attic/noise/. Do NOT touch Risky tier. Do NOT remove any Python files or docs. Run tests after.",
+      "acceptanceCriteria": [
+        "Safe-tier files moved to _attic/noise/",
+        "All tests still pass",
+        "No Python source files moved or deleted"
+      ],
+      "files": ["docs/MOVE_CANDIDATES.md"]
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+# =============================================================================
+# AgentAIMO — RalphTUI Configuration
+# Project: AIMO 3 competition math solver
+# Deadline: April 8, 2026
+# Strategy: Use Codex for routine tasks, Claude (opus) for complex reasoning
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# DEFAULT AGENT: Codex (frugal — saves Claude quota for complex tasks)
+# ---------------------------------------------------------------------------
+agent = "codex"
+
+# ---------------------------------------------------------------------------
+# AGENTS
+# ---------------------------------------------------------------------------
+
+# Codex — default workhorse for routine implementation tasks
+[[agents]]
+name = "codex"
+plugin = "codex"
+default = true
+command = "codex"
+timeout = 600000          # 10 minutes per task
+
+  [agents.options]
+  fullAuto = true
+  sandbox = "workspace-write"
+  # model is set per-run via --model flag; default: o4-mini for speed/cost
+
+# Claude Code — reserved for complex research, architecture, and critical reviews
+# Use with: ralph-tui run --agent claude --model opus
+[[agents]]
+name = "claude"
+plugin = "claude"
+default = false
+command = "claude"
+timeout = 900000          # 15 minutes — Claude tasks are deeper
+
+  [agents.options]
+  model = "opus"          # Always opus for Claude tasks — thinking must be enabled
+  printMode = "text"
+  # Thinking: claude-opus-4-6 uses extended thinking automatically on hard tasks
+
+# ---------------------------------------------------------------------------
+# SUBAGENT TRACING
+# ---------------------------------------------------------------------------
+subagentTracingDetail = "full"
+
+# ---------------------------------------------------------------------------
+# TRACKER: PRD JSON (tasks defined in prd.json at project root)
+# ---------------------------------------------------------------------------
+tracker = "json"
+
+# ---------------------------------------------------------------------------
+# GLOBAL RUNTIME SETTINGS
+# ---------------------------------------------------------------------------
+[options]
+maxIterations = 50        # Hard stop — prevent runaway loops
+pauseOnError = true       # Always pause on error so human can inspect
+confirmBeforeStart = true # Require human confirmation before each run
+saveLogsPerIteration = true
+resumeOnCrash = true
+
+# ---------------------------------------------------------------------------
+# PROMPT TEMPLATE CONTEXT — injected into every agent prompt
+# ---------------------------------------------------------------------------
+[context]
+projectName = "AgentAIMO"
+deadline = "April 8 2026"
+testCommand = "python -m pytest tests/ --tb=short -q"
+currentPhase = "Phase 4"
+testCount = "159"
+codeRules = """
+CRITICAL RULES (never violate):
+- All new code goes in src/ — fill existing stubs, never create parallel implementations
+- Tests go in tests/ — every new module needs ≥3 passing tests before commit
+- Never remove an existing test; never suppress errors with try/except pass
+- ConfidenceLevel hierarchy: LEVEL_0_EXACT > LEVEL_1_SYMBOLIC > ENUMERATED > NL_JUDGMENT > UNVERIFIED
+- No live model API calls in tests or offline modules
+- pipeline.run() takes SolutionTrace(raw_text=sol_text) — NOT a raw string
+- Run npx gitnexus analyze after every commit to keep the code graph fresh
+- Run gitnexus_impact before modifying any symbol
+- Never edit the Kaggle notebook without reading it first
+"""
