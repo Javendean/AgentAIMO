@@ -259,11 +259,13 @@ print("Download this file from the notebook's Output tab.")
 
 
 # ===========================================================================
-# Cell 7: Re-select answers using AnswerSelector (typed, confidence-weighted)
+# Cell 7: Re-select answers using AnswerSelector (two-attempt policy)
 # ===========================================================================
-# Applies AnswerSelector over the saved JSONL traces, building minimal
-# VerificationReport objects (ConfidenceLevel.NL_JUDGMENT) per attempt.
-# Produces a second output file with the re-selected best answers.
+# Applies AnswerSelector.select_two() over the saved JSONL traces, building
+# minimal VerificationReport objects (ConfidenceLevel.NL_JUDGMENT) per attempt.
+# Produces a second output file with two answers per problem:
+#   attempt_1: highest-confidence answer
+#   attempt_2: highest-confidence *disagreeing* answer (fallback to attempt_1 if none)
 from src.solver.answer_selector import AnswerSelector, AnnotatedSolution
 from src.models.verification import VerificationReport, ConfidenceLevel
 
@@ -293,22 +295,36 @@ with open(OUTPUT_PATH, "r", encoding="utf-8") as _f:
             for _i, _att in enumerate(_trace.get("attempts", []))
         ]
 
-        _best_answer, _reason, _confidence = selector.select(_annotated)
+        (_best_answer, _reason, _confidence), (_second_answer, _second_reason, _second_conf) = (
+            selector.select_two(_annotated)
+        )
+
+        # Fallback: if no disagreeing answer, use first answer for both attempts
+        if _second_answer is None:
+            _second_answer = _best_answer
+            _second_reason = _second_reason or _reason
+            _second_conf = _second_conf if _second_conf > 0.0 else _confidence
+
         _selected_str = str(_best_answer) if _best_answer is not None else None
+        _second_str = str(_second_answer) if _second_answer is not None else None
         _original = _trace.get("final_answer")
 
         reselected.append({
             "problem_id": _trace["problem_id"],
             "original_answer": _original,
-            "selected_answer": _selected_str,
-            "reason": _reason,
-            "confidence": _confidence,
+            "attempt_1": _selected_str,
+            "attempt_1_reason": _reason,
+            "attempt_1_confidence": _confidence,
+            "attempt_2": _second_str,
+            "attempt_2_reason": _second_reason,
+            "attempt_2_confidence": _second_conf,
         })
 
         if _original != _selected_str:
             logger.info(
                 f"  [Reselect] {_trace['problem_id']}: "
-                f"{_original!r} → {_selected_str!r} ({_reason})"
+                f"{_original!r} → attempt_1={_selected_str!r} ({_reason}), "
+                f"attempt_2={_second_str!r} ({_second_reason})"
             )
 
 RESELECTED_PATH = OUTPUT_PATH.replace(".jsonl", "_reselected.jsonl")
@@ -316,4 +332,4 @@ with open(RESELECTED_PATH, "w", encoding="utf-8") as _f:
     for _r in reselected:
         _f.write(json.dumps(_r) + "\n")
 
-logger.info(f"Re-selected {len(reselected)} answers → {RESELECTED_PATH}")
+logger.info(f"Re-selected {len(reselected)} answers (two-attempt policy) → {RESELECTED_PATH}")

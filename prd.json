@@ -37,7 +37,7 @@
       "id": "P4-C1",
       "title": "Implement select_two() two-attempt policy in AnswerSelector",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "dependsOn": [
         "P4-A1"
       ],
@@ -49,7 +49,8 @@
         "test_select_two_with_all_none_answers passes (graceful when no answers extracted)",
         "All tests pass"
       ],
-      "notes": "Implementation spec is in docs/PHASE4_HANDOFF.md Track C. The method signature: def select_two(self, annotated_solutions) -> tuple[tuple, tuple]. When all answers are None, return (None, 'no_answer', 0.0) for both slots."
+      "notes": "Implementation spec is in docs/PHASE4_HANDOFF.md Track C. The method signature: def select_two(self, annotated_solutions) -> tuple[tuple, tuple]. When all answers are None, return (None, 'no_answer', 0.0) for both slots.",
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "P4-C2",
@@ -142,6 +143,6 @@
   "metadata": {
     "createdAt": "2026-03-21",
     "version": "4.0",
-    "updatedAt": "2026-03-21T23:31:08.792Z"
+    "updatedAt": "2026-03-21T23:32:47.097Z"
   }
 }

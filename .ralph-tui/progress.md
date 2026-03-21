@@ -18,6 +18,16 @@ after each iteration and it's included in prompts for context.
 
 ---
 
+## 2026-03-21 - P4-C2
+- **What was implemented**: Updated Cell 7 in `notebook/kaggle_notebook.py` to use `selector.select_two()` instead of `selector.select()`. Attempt 1 = highest-confidence answer; Attempt 2 = highest-confidence disagreeing answer. Fallback: when `second_answer is None`, use first answer for both attempts (with original reason/confidence).
+- **Files changed**:
+  - `notebook/kaggle_notebook.py` — rewrote Cell 7 body: replaced `selector.select()` call with `selector.select_two()`, unpacked both tuples, added None-fallback for attempt 2, updated output record schema (`attempt_1`, `attempt_2` keys).
+- **Learnings:**
+  - `select_two()` was already implemented (P4-C1) — this task was purely the notebook integration.
+  - The fallback logic reuses `_second_reason` before falling back to `_reason` to preserve the "no_disagreement" signal in the log.
+  - Pre-existing 15 failures in `test_verification_battery.py` are unrelated and unchanged.
+---
+
 ## 2026-03-21 - P4-C1
 - **What was implemented**: Added `select_two()` method to `AnswerSelector` per PHASE4_HANDOFF.md Track C. Returns `(best, second_best_disagreeing)` as two `(answer, reason, confidence)` tuples. Added 3 new tests.
 - **Files changed**:
