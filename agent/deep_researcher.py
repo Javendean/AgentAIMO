@@ -23,10 +23,23 @@ Usage (Kaggle Notebook):
 import json
 import logging
 import re
+import sys
 import time
 from collections import Counter
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
+
+# Make src/ importable when this module is loaded from the repo root or Kaggle
+_repo_root = Path(__file__).resolve().parent.parent
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
+try:
+    from src.solver.answer_selector import AnswerSelector as _AnswerSelector, AnnotatedSolution as _AnnotatedSolution
+    from src.models.verification import VerificationReport as _VerificationReport, ConfidenceLevel as _ConfidenceLevel
+    _ANSWER_SELECTOR_AVAILABLE = True
+except ImportError:
+    _ANSWER_SELECTOR_AVAILABLE = False
 
 from agent.sandbox import run_verification, extract_code_blocks
 from agent.prompts import (
@@ -692,15 +705,38 @@ class DeepResearcher:
         if consensus is None:
             vote_dict = dict(answer_counts)
             if answer_counts:
-                top_answer, top_count = answer_counts.most_common(1)[0]
-                total_votes = sum(answer_counts.values())
-                consensus_ratio = top_count / total_votes
-                logger.info(
-                    f"    Majority vote: '{top_answer}' with {top_count}/{total_votes} "
-                    f"votes ({consensus_ratio:.0%})"
-                )
-                if consensus_ratio >= 0.3:  # Accept if ≥30% agreement (weighted)
-                    consensus = top_answer
+                if _ANSWER_SELECTOR_AVAILABLE:
+                    # Use AnswerSelector for typed, confidence-weighted selection
+                    _annotated = [
+                        _AnnotatedSolution(
+                            final_answer=int(att.extracted_answer) if att.extracted_answer is not None else None,
+                            report=_VerificationReport(
+                                passed_checks=1 if att.extracted_answer is not None else 0,
+                                confidence=_ConfidenceLevel.NL_JUDGMENT,
+                            ),
+                            attempt_id=att.attempt_number,
+                            raw_text=att.solution_text,
+                        )
+                        for att in attempts
+                    ]
+                    _selector = _AnswerSelector()
+                    best_int, reason, conf = _selector.select(_annotated)
+                    if best_int is not None:
+                        consensus = str(best_int)
+                        logger.info(
+                            f"    AnswerSelector: '{consensus}' ({reason}, conf={conf:.2f})"
+                        )
+                else:
+                    # Fallback: plain majority vote when src/ unavailable
+                    top_answer, top_count = answer_counts.most_common(1)[0]
+                    total_votes = sum(answer_counts.values())
+                    consensus_ratio = top_count / total_votes
+                    logger.info(
+                        f"    Majority vote: '{top_answer}' with {top_count}/{total_votes} "
+                        f"votes ({consensus_ratio:.0%})"
+                    )
+                    if consensus_ratio >= 0.3:
+                        consensus = top_answer
         else:
             vote_dict = dict(answer_counts)
 

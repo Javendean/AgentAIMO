@@ -256,3 +256,64 @@ for k, v in summary.items():
 print("=" * 60)
 print(f"\nOutput saved to: {OUTPUT_PATH}")
 print("Download this file from the notebook's Output tab.")
+
+
+# ===========================================================================
+# Cell 7: Re-select answers using AnswerSelector (typed, confidence-weighted)
+# ===========================================================================
+# Applies AnswerSelector over the saved JSONL traces, building minimal
+# VerificationReport objects (ConfidenceLevel.NL_JUDGMENT) per attempt.
+# Produces a second output file with the re-selected best answers.
+from src.solver.answer_selector import AnswerSelector, AnnotatedSolution
+from src.models.verification import VerificationReport, ConfidenceLevel
+
+selector = AnswerSelector()
+reselected = []
+
+with open(OUTPUT_PATH, "r", encoding="utf-8") as _f:
+    for _line in _f:
+        if not _line.strip():
+            continue
+        _trace = json.loads(_line)
+
+        _annotated = [
+            AnnotatedSolution(
+                final_answer=(
+                    int(_att["extracted_answer"])
+                    if _att.get("extracted_answer") is not None
+                    else None
+                ),
+                report=VerificationReport(
+                    passed_checks=1 if _att.get("extracted_answer") is not None else 0,
+                    confidence=ConfidenceLevel.NL_JUDGMENT,
+                ),
+                attempt_id=_i,
+                raw_text=_att.get("solution_text", ""),
+            )
+            for _i, _att in enumerate(_trace.get("attempts", []))
+        ]
+
+        _best_answer, _reason, _confidence = selector.select(_annotated)
+        _selected_str = str(_best_answer) if _best_answer is not None else None
+        _original = _trace.get("final_answer")
+
+        reselected.append({
+            "problem_id": _trace["problem_id"],
+            "original_answer": _original,
+            "selected_answer": _selected_str,
+            "reason": _reason,
+            "confidence": _confidence,
+        })
+
+        if _original != _selected_str:
+            logger.info(
+                f"  [Reselect] {_trace['problem_id']}: "
+                f"{_original!r} → {_selected_str!r} ({_reason})"
+            )
+
+RESELECTED_PATH = OUTPUT_PATH.replace(".jsonl", "_reselected.jsonl")
+with open(RESELECTED_PATH, "w", encoding="utf-8") as _f:
+    for _r in reselected:
+        _f.write(json.dumps(_r) + "\n")
+
+logger.info(f"Re-selected {len(reselected)} answers → {RESELECTED_PATH}")
