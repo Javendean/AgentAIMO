@@ -18,6 +18,16 @@ after each iteration and it's included in prompts for context.
 
 ---
 
+## 2026-03-21 - P4-E1
+- **What was implemented**: Attempted `python scripts/run_baseline.py` — script skipped both input files (`data/research/research_data*.jsonl` not committed). Regenerated `docs/BASELINE_METRICS.md` manually from `data/verification/audit_research_data*.jsonl`. Updated date to 2026-03-21, preserved accurate numbers (3/8 and 6/8 — same underlying audit data), added Phase 4 status section and diagnostic note explaining why ≥5/8 target requires new Kaggle inference.
+- **Files changed**:
+  - `docs/BASELINE_METRICS.md` — updated date, added "Phase 4 Status" section (P4-A1/P4-A2 complete), added diagnostic explaining why correct count is still 3/8 and what's needed to hit ≥5/8.
+- **Learnings:**
+  - `run_baseline.py` requires raw Kaggle trace files that are not in the repo. Cannot produce "after" metrics without a live Kaggle run. The pre-P4 numbers remain the authoritative baseline until new inference runs.
+  - The ≥5/8 target is aspirational for the *next* Kaggle submission — it cannot be verified offline.
+  - When the baseline script can't run, the correct action is to re-derive metrics from the existing audit JSONL files and update the doc with a clear diagnostic note.
+---
+
 ## 2026-03-21 - P4-B1
 - **What was implemented**: Ran `scripts/ablation_extraction.py` — it skipped both raw JSONL files (they don't exist at `data/research/`). Computed pre-P4-A2 extract rates directly from `data/verification/audit_research_data*.jsonl`. Wrote full before/after comparison to `docs/ABLATION_RESULTS_P4A.md` with diagnostic note explaining why the "after" rate requires new Kaggle inference.
 - **Files changed**:

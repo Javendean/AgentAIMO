@@ -73,7 +73,7 @@
       "id": "P4-B1",
       "title": "Run ablation and document extract_rate improvement",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "dependsOn": [
         "P4-A1",
         "P4-A2"
@@ -83,7 +83,8 @@
         "docs/ABLATION_RESULTS_P4A.md exists with before/after comparison",
         "Extract rate result is documented clearly",
         "If rate < 40%, a diagnostic note is included explaining why"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "P4-E1",
@@ -144,6 +145,6 @@
   "metadata": {
     "createdAt": "2026-03-21",
     "version": "4.0",
-    "updatedAt": "2026-03-21T23:34:03.607Z"
+    "updatedAt": "2026-03-21T23:36:37.370Z"
   }
 }

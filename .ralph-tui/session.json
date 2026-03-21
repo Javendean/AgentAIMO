@@ -3,10 +3,10 @@
   "sessionId": "7f416d13-286f-4216-b1f6-88f37a1ebd7a",
   "status": "running",
   "startedAt": "2026-03-21T23:25:02.978Z",
-  "updatedAt": "2026-03-21T23:34:03.607Z",
-  "currentIteration": 4,
+  "updatedAt": "2026-03-21T23:36:37.370Z",
+  "currentIteration": 5,
   "maxIterations": 10,
-  "tasksCompleted": 4,
+  "tasksCompleted": 5,
   "isPaused": false,
   "agentPlugin": "claude",
   "model": "sonnet",
@@ -42,8 +42,8 @@
       {
         "id": "P4-B1",
         "title": "Run ablation and document extract_rate improvement",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "P4-E1",
@@ -111,12 +111,22 @@
       "durationMs": 75499,
       "startedAt": "2026-03-21T23:32:47.097Z",
       "endedAt": "2026-03-21T23:34:02.596Z"
+    },
+    {
+      "iteration": 5,
+      "status": "completed",
+      "taskId": "P4-B1",
+      "taskTitle": "Run ablation and document extract_rate improvement",
+      "taskCompleted": true,
+      "durationMs": 152755,
+      "startedAt": "2026-03-21T23:34:03.606Z",
+      "endedAt": "2026-03-21T23:36:36.361Z"
     }
   ],
   "skippedTaskIds": [],
   "cwd": "/home/user/AgentAIMO",
   "activeTaskIds": [
-    "P4-B1"
+    "P4-E1"
   ],
   "subagentPanelVisible": false
 }
