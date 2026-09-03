@@ -2,13 +2,13 @@
 
 **Created:** 2026-03-13  
 **Deadline:** April 8, 2026 (~26 days)  
-**Sources:** `evidence.md`, `evolution.md`, `docs/CODEBASE_ANALYSIS.md`, repo audit
+**Sources:** `docs/archive/evidence.md`, `docs/archive/evolution.md`, `docs/CODEBASE_ANALYSIS.md`, repo audit
 
 ---
 
 ## 0. The Corrected Mental Model
 
-The original forward plan treated this as a pure docs-then-build repo restructuring. That was wrong. `evolution.md` corrects the framing:
+The original forward plan treated this as a pure docs-then-build repo restructuring. That was wrong. `docs/archive/evolution.md` corrects the framing:
 
 **This project is two systems, not one.**
 
@@ -30,9 +30,9 @@ NemoSkills (AIMO2): GenSelect (learned text-based selector) + 540K training prob
 
 **Our addition:** decompose each solution trace into mechanically verifiable and non-verifiable components, compute **typed confidence signals** per component, and feed those signals into answer selection.
 
-This is strictly more informative than majority voting (treats all traces as exchangeable) and strictly more trustworthy than GenSelect (which operates on surface text, not structured evidence). The theoretical framing is in `evolution.md` §§ Idea 2 and The Core Research Problem.
+This is strictly more informative than majority voting (treats all traces as exchangeable) and strictly more trustworthy than GenSelect (which operates on surface text, not structured evidence). The theoretical framing is in `docs/archive/evolution.md` §§ Idea 2 and The Core Research Problem.
 
-The **open research problem** at the heart of this: given a finite verification compute budget B, how do you allocate checks across N traces and M verifiable claims per trace to maximally improve selection accuracy? This is a stochastic scheduling problem with information-dependent rewards (formalised in `evolution.md` §§ The Research Question for GPT-5.4 Pro).
+The **open research problem** at the heart of this: given a finite verification compute budget B, how do you allocate checks across N traces and M verifiable claims per trace to maximally improve selection accuracy? This is a stochastic scheduling problem with information-dependent rewards (formalised in `docs/archive/evolution.md` §§ The Research Question for GPT-5.4 Pro).
 
 ---
 
@@ -132,7 +132,7 @@ audit/
   tests/test_verifiers.py
 ```
 
-**The `ConfidenceLevel` taxonomy** (from `evolution.md` §§ Idea 2):
+**The `ConfidenceLevel` taxonomy** (from `docs/archive/evolution.md` §§ Idea 2):
 
 | Level | Name | Meaning |
 |---|---|---|
@@ -168,12 +168,12 @@ audit/
   selection/two_attempt_policy.py # maps confidence distribution to safe/speculative pair
 ```
 
-**The selection algorithm** (to be formalized by GPT-5.4 Pro via the open problem in `evolution.md`):
+**The selection algorithm** (to be formalized by GPT-5.4 Pro via the open problem in `docs/archive/evolution.md`):
 - For each trace T_i, compute a confidence score from its `VerifierResult[]`
 - Weight answers by confidence, not raw count
 - For the two-attempt structure: attempt 1 = highest-confidence answer, attempt 2 = highest-confidence *among disagreeing* traces (maximally informative second attempt)
 
-**The open problem** (stochastic verification budget allocation — see `evolution.md` §§ The Research Question for GPT-5.4 Pro) determines the *optimal* version of this selector. The greedy version (verify all, then weight) is implemented first; the budget-optimal version is the research target.
+**The open problem** (stochastic verification budget allocation — see `docs/archive/evolution.md` §§ The Research Question for GPT-5.4 Pro) determines the *optimal* version of this selector. The greedy version (verify all, then weight) is implemented first; the budget-optimal version is the research target.
 
 **Ablation:** Compare against AIMO2 winner's GenSelect on the same 50+ practice problems.
 
@@ -258,12 +258,12 @@ The original plan required 7 docs before any code. Given 26 days, reorder: docs 
 
 ## 5. The Research Track (running in parallel)
 
-Every implementation phase emits a logged evaluation artifact (per `evidence.md` §§ 6). These accumulate into the empirical basis for `docs/RESEARCH_MANUSCRIPT.md` — the Opus 4.6 deliverable specified in `evolution.md`.
+Every implementation phase emits a logged evaluation artifact (per `docs/archive/evidence.md` §§ 6). These accumulate into the empirical basis for `docs/RESEARCH_MANUSCRIPT.md` — the Opus 4.6 deliverable specified in `docs/archive/evolution.md`.
 
-**The flagship research problem** (preserved verbatim from `evolution.md`):
+**The flagship research problem** (preserved verbatim from `docs/archive/evolution.md`):
 > *Given multiple candidate solution traces to a hidden short-answer Olympiad problem, can a system select the correct final answer better by conditioning on typed verifier outcomes and structured evidence than by majority voting, raw self-consistency, or generative selection alone?*
 
-**The open problem for GPT-5.4 Pro** (the budget-optimal verification allocation stochastic scheduling problem) should be submitted to it once Phase 1B is complete and real verification timing data exists. The warm-up/curved-space structure is already specified in `evolution.md` §§ The Research Question for GPT-5.4 Pro.
+**The open problem for GPT-5.4 Pro** (the budget-optimal verification allocation stochastic scheduling problem) should be submitted to it once Phase 1B is complete and real verification timing data exists. The warm-up/curved-space structure is already specified in `docs/archive/evolution.md` §§ The Research Question for GPT-5.4 Pro.
 
 ---
 
@@ -298,10 +298,10 @@ Phases 1A and 1B overlap deliberately — the typed verifier depends on the cano
 
 ## 8. The Decision That Changes Everything
 
-The original forward plan was conservative and docs-first. `evolution.md` adds the deadline and establishes that the core contribution (typed verification → weighted selection) is both competitively urgent and research-novel. The revised plan front-loads bug fixes that affect the submission, builds the typed verifier substrate as the central technical contribution, and treats the remaining docs as outputs of the implementation process rather than prerequisites to it.
+The original forward plan was conservative and docs-first. `docs/archive/evolution.md` adds the deadline and establishes that the core contribution (typed verification → weighted selection) is both competitively urgent and research-novel. The revised plan front-loads bug fixes that affect the submission, builds the typed verifier substrate as the central technical contribution, and treats the remaining docs as outputs of the implementation process rather than prerequisites to it.
 
-The fundamental principle from `evidence.md` is preserved:
+The fundamental principle from `docs/archive/evidence.md` is preserved:
 > **Every implementation phase must unlock a new measurable experiment.**
 
-The fundamental constraint from `evolution.md` is added:
+The fundamental constraint from `docs/archive/evolution.md` is added:
 > **Every implementation phase must also improve the next submission.**

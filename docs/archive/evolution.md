@@ -1,3 +1,5 @@
+> **Archived raw working transcript, kept for provenance, not a document to read.** This is an unedited AI chat transcript from the design of the verification substrate. Nothing in it is a status report or a specification. See the [README](../../README.md) and `docs/BASELINE_METRICS.md` for what the code actually does.
+
 # First: The rebuttal matters because it reshapes what the Opus prompt should do
 
 The critique is **largely correct about the competition.** Let me be direct about what it gets right and what it misses, because this determines what we tell Opus to build.

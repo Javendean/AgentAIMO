@@ -3,7 +3,7 @@
 **Created:** 2026-03-13  
 **Supersedes:** `docs/FORWARD_PLAN.md` (pre-merge, now stale)  
 **Deadline:** April 8, 2026 (~25 days remaining)  
-**Sources:** All `docs/*.md`, `evolution.md`, `evidence.md`, `.agent/workflows/*`, `src/**/*.py`, `agent/*.py`
+**Sources:** All `docs/*.md`, `docs/archive/evolution.md`, `docs/archive/evidence.md`, `.agent/workflows/*`, `src/**/*.py`, `agent/*.py`
 
 ---
 
@@ -322,7 +322,7 @@ April 8:    COMPETITION DEADLINE
 ## 8. The Principle (unchanged)
 
 > **Every implementation phase must unlock a new measurable experiment.**
-> — `evidence.md`
+> — `docs/archive/evidence.md`
 
 > **Every implementation phase must also improve the next submission.**
-> — `evolution.md`
+> — `docs/archive/evolution.md`

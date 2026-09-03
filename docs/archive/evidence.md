@@ -1,3 +1,5 @@
+> **Archived raw working transcript, kept for provenance, not a document to read.** This is an unedited AI chat transcript from the design of the verification substrate. Nothing in it is a status report or a specification. See the [README](../../README.md) and `docs/BASELINE_METRICS.md` for what the code actually does.
+
 > [!WARNING]
 > **Status Disclaimer (2026-03-13):** This document is advisory, **not descriptive**.
 > Its framing of "past the repo archaeology stage" was aspirational at time of writing.

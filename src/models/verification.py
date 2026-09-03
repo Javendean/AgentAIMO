@@ -1,6 +1,6 @@
 """Verification models — confidence taxonomy and verification report.
 
-ConfidenceLevel is the typed evidence taxonomy defined in evolution.md §§ Idea 2
+ConfidenceLevel is the typed evidence taxonomy defined in docs/archive/evolution.md §§ Idea 2
 and FORWARD_PLAN_v2.md §3. All verification modules MUST produce one of these
 levels; they must never collapse to a boolean.
 """
